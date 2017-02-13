@@ -26,7 +26,7 @@ repeat{
     if(!is.character(state)){
       # If returned block is same as endBlock, then send completion email
       if(state==endBlock){
-        # Send complation mail if code completes
+        # Send completion mail if code completes
         message <- createMessage(endBlock, startBlock, endBlock, 1)
         mail_to_send <- createEmailFromTemplate(template, message)
         sendMessageWithLabel(mail_to_send)
