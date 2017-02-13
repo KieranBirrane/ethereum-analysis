@@ -21,7 +21,7 @@ repeat{
     
     mess_subject <- createSubject(startBlock,endBlock)
     template <- createTemplate(mess_to, mess_from, mess_subject)
-    state <- getBlockLoop(startBlock, endBlock, loopsize, template)
+    state <- getBlockLoop(startBlock, endBlock, loopsize)
     
     if(!is.character(state)){
       # If returned block is same as endBlock, then send completion email
