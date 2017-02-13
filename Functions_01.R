@@ -2,8 +2,6 @@
 ##### ##### ##### ##### ##### ##### ### Functions ### ##### ##### ##### ##### ##### #####
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
-
-
 ##### getLabels #####
 #
 # Returns all labels from Gmail
@@ -27,19 +25,9 @@ getLabels <- function(){
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned")){
-  # Set default to "Regular"
-  if(missing(type)){
-    type = "Regular"
-  }
-  
-  if(type == "Regular"){
-    filename <- paste(getwd(),"\\","Block_Info_",startBlock,"_",endBlock,".csv"
+setupBlockFile <- function(startBlock,endBlock){
+  filename <- paste("Block_Info_",startBlock,"_",endBlock,".csv"
                     ,sep = "")
-  } else if(type == "Consolidated" | type == "Cleaned") {
-    filename <- paste(getwd(),"\\",type,"\\",type,"_",startBlock,"_",endBlock,".csv"
-                      ,sep = "")
-  }
   if(file.exists(filename)){file.remove(filename)}
   
   return(filename)
@@ -189,7 +177,19 @@ getRequestInfo <- function(){
     # Change message label
     setEmailToProcessed(msgs_new)
     
-    return(info.df)
+    if(start_block==end_block){
+      return("Cancel") # Cancel the process if start and end block are the same
+    }else{
+      return(info.df)
+    }
+  }else if(checker == "Status"){
+    setEmailToProcessed(msgs_new)
+    
+    return(checker)
+  }else if(checker == "Error"){
+    setEmailToProcessed(msgs_new)
+    
+    return(checker)
   }else if(checker == "Cancel"){
     setEmailToProcessed(msgs_new)
     
@@ -207,11 +207,14 @@ getRequestInfo <- function(){
 # Start loop for downloading blocks
 #
 ########################
-getBlockLoop <- function(startBlock,endBlock,loopsize){
+getBlockLoop <- function(startBlock,endBlock,loopsize,email_template){
   # Set up loop number
   iteration = startBlock
   loop_num = ceiling((endBlock-startBlock)/loopsize)
 
+  # Send one mail if code fails to start
+  #mail_to_send <- createEmailFromTemplate(email_template, "Code failed to start")
+  
   tryCatch(
     {
       for(j in 1:loop_num){
@@ -228,6 +231,30 @@ getBlockLoop <- function(startBlock,endBlock,loopsize){
         # Loop through remaining blocks in loop and write to csv
         for(i in (startBlock+1):endblock_loop){
           iteration = i
+          
+          # Create email message if code fails during loop
+          #message <- createMessage(iteration - 1, startBlock, endblock_loop, 2)
+          #mail_to_send <- createEmailFromTemplate(email_template, message)
+          
+          # Create new request email
+          #request_subject <- createSubject(iteration,endBlock,"Request")
+          #request_message <- createMessage(loopsize,iteration,endBlock,3)
+          #request_mail_template <- createTemplate("d14127984@mydit.ie","d14127984@mydit.ie",request_subject)
+          #request_email <- createEmailFromTemplate(request_mail_template,request_message)
+          
+          # Get latest request
+          #request <- getRequestInfo()
+          #if(request == "Status"){
+          #  status_message <- createMessage(iteration - 1,startBlock,endblock_loop)
+          #  status_mail_to_send <- createEmailFromTemplate(email_template, status_message)
+          #  sendMessageWithLabel(status_mail_to_send)
+          #} 
+          #else if(request == "Error"){
+          #  stop("Test error")
+          #}
+          #else if(request == "Cancel"){
+          #  stop("Cancel the process")
+          #}
 
           # Request data from site
           new_block <- getBlock(iteration)
@@ -242,158 +269,15 @@ getBlockLoop <- function(startBlock,endBlock,loopsize){
     , error = function(e){
       # Rename the output file
       file.rename(filename,setupBlockFile(startBlock, iteration - 1))
+      # error_message <- data.frame(list("Date" = Sys.time()
+      #                                  ,"Message"=print(e)))
+      # write.table(error_message, "Error_log.csv", sep = ",", col.names = F, append = T, row.names = FALSE)
     }
     , finally = {
-      # Return failure block
+      #sendMessageWithLabel(mail_to_send)
       return(iteration)
     }
   )
   
   return("Run Completed")
-}
-
-
-
-##### createDirectory #####
-#
-# Create directory if it doesn't exist
-# http://stackoverflow.com/questions/10266963/moving-files-between-folders
-####################
-createDirectory <- function(full_path){
-  todir <- dirname(full_path)
-  if(!isTRUE(file.info(todir)$isdir)){
-    dir.create(todir, recursive=TRUE)
-  }
-}
-
-
-
-##### moveFile #####
-#
-# Move file from one place to another
-# http://stackoverflow.com/questions/10266963/moving-files-between-folders
-####################
-moveFile <- function(from, to){
-  # Createa directory if it doesn't exist
-  createDirectory(to)
-  file.rename(from = from, to = to)
-}
-
-
-
-##### consolidateBlockFiles #####
-#
-# Get the latest email to read requests
-#
-#################################
-consolidateBlockFiles <- function(wd, clean = FALSE){
-  
-  # Setup variables
-  if(clean){
-    consol_type = "Cleaned"
-  } else {
-    consol_type = "Consolidated"
-  }
-  consol_filename <- setupBlockFile(0, global_last_block, type = consol_type)
-  createDirectory(consol_filename) # Create directory of output file if it doesn't exist
-  row_count = 0
-  tx_count = 0
-  
-  # Get list of files in directory
-  list_files <- list.files(global_read_wd, pattern = "*.csv", full.names = TRUE)
-  
-  # Get old file name and create new file name
-  for(i in 1:length(list_files)){
-    
-    # Check file name and move on if necessary
-    old_file <- list_files[i]
-    if(regexpr("Block_Info",old_file) == -1){
-      next # If filename doesn't contain "Block_Info" then go to next file
-    }
-    
-    # Set file path and name
-    file_path <- strsplit(old_file, "/")[[1]][1]
-    file_name <- strsplit(old_file, "/")[[1]][2]
-    file_move <- ""# "\\Archived Data"
-    
-    # Set new file name
-    new_file <- paste(file_path,file_move,"/",file_name
-                      ,sep="")
-    
-    
-    
-    # Open file and create new consolidated file
-    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character") # str(read_data[1,])
-    headers_eth <- list("data.number"
-                        ,"data.hash"
-                        ,"data.tx_count"
-                        ,"date.added"
-                        ,"file.from")
-    new_data <- cbind.data.frame(read_data[[headers_eth[[1]][1]]]
-                                 ,read_data[[headers_eth[[2]][1]]]
-                                 ,read_data[[headers_eth[[3]][1]]]
-                                 ,Sys.time()
-                                 ,file_name)
-    colnames(new_data) <- headers_eth
-    
-    # Count number of rows
-    row_count = row_count + nrow(read_data)
-    tx_count = tx_count + sum(as.numeric(read_data$data.tx_count))
-    
-    # Filter out transactions != 0
-    if(clean){
-      new_data <- new_data[new_data$data.tx_count != 0,] # filter out where txn is not zero
-    }
-    
-    
-    
-    # Set output file name
-    if(i == 1){
-      set_start_block = min(read_data$data.number)
-    } else if (i == length(list_files)){
-      set_end_block = max(read_data$data.number)
-    }
-    
-    
-    # Set write table information
-    if(i==1){
-      col_names = T
-      row_append = F
-    } else {
-      col_names = F
-      row_append = T
-    }
-    write.table(new_data, consol_filename, sep = ",", col.names = col_names, append = row_append, row.names = FALSE)
-    
-    # Move read file to archive folder
-    moveFile(old_file, new_file)
-  }
-  
-  # Create new file name
-  consol_filename_new <- setupBlockFile(set_start_block, set_end_block, type = consol_type)
-  moveFile(consol_filename,consol_filename_new)
-  
-  # Open new cleaned file and check the row count
-  read_data_consol <- read.table(consol_filename_new, header = TRUE, sep = ",", colClasses = "character")
-  
-  # Return information
-  if(clean){
-    count_data <- tx_count
-    count_file <- sum(as.numeric(read_data_consol$data.tx_count))
-    count_blocks <- nrow(read_data_consol)
-    true_false <- count_data == count_file
-    info.df <- as.data.frame(list("TRUE_FALSE" = true_false
-                                  ,"Input_Tx" = count_data
-                                  ,"Output_Tx" = count_file
-                                  ,"Output_Blocks" = count_blocks))
-  } else {
-    count_data <- row_count
-    count_file <- nrow(read_data_consol)
-    true_false <- count_data == count_file
-    info.df <- as.data.frame(list("TRUE_FALSE" = true_false
-                                  ,"Input_Blocks" = count_data
-                                  ,"Output_Blocks" = count_file))
-  }
-  
-  return(info.df)
 }

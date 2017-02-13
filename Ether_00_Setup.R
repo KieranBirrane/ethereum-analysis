@@ -30,6 +30,7 @@ library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")   
 
 
 
+
 ##### Global variables ####
 global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
 global_last_block = 3127805
