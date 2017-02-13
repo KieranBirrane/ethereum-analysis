@@ -28,11 +28,11 @@ library(jsonlite)   # Version:  jsonlite_0.9.19   # lsf.str("package:jsonlite") 
 library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")       # detach("package:gmailr", unload = TRUE)
 #library(RODBC)      # Version:  RODBC_1.3-14      # lsf.str("package:RODBC")        # detach("package:RODBC", unload = TRUE)
 
-?detach
+
 
 
 ##### Global variables ####
-global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
+global_wd = "C:\\Users\\kieran.birrane\\Desktop\\MSc in Computing\\Dissertation\\Ethereum Data - Testing"
 global_last_block = 3127805
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
 global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Request Processed"
