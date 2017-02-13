@@ -25,9 +25,14 @@ getLabels <- function(){
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock){
-  filename <- paste("Block_Info_",startBlock,"_",endBlock,".csv"
+setupBlockFile <- function(startBlock,endBlock, cleaned = FALSE){
+  if(!cleaned){
+    filename <- paste("Block_Info_",startBlock,"_",endBlock,".csv"
                     ,sep = "")
+  } else {
+    filename <- paste("Cleaned\\Cleaned_Blocks_",startBlock,"_",endBlock,".csv"
+                      ,sep = "")
+  }
   if(file.exists(filename)){file.remove(filename)}
   
   return(filename)
@@ -207,7 +212,7 @@ getRequestInfo <- function(){
 # Start loop for downloading blocks
 #
 ########################
-getBlockLoop <- function(startBlock,endBlock,loopsize,email_template){
+getBlockLoop <- function(startBlock,endBlock,loopsize){
   # Set up loop number
   iteration = startBlock
   loop_num = ceiling((endBlock-startBlock)/loopsize)
@@ -280,4 +285,19 @@ getBlockLoop <- function(startBlock,endBlock,loopsize,email_template){
   )
   
   return("Run Completed")
+}
+
+
+
+##### moveFile #####
+#
+# Move file from one place to another
+# http://stackoverflow.com/questions/10266963/moving-files-between-folders
+########################
+
+
+moveFile <- function(from, to) {
+  todir <- dirname(to)
+  if(!isTRUE(file.info(todir)$isdir)) dir.create(todir, recursive=TRUE)
+  file.rename(from = from,  to = to)
 }
