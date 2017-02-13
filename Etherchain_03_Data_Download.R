@@ -26,19 +26,22 @@ setwd(global_wd)
 
 
 # Set starting variables
-repeat{
-  request <- getRequestInfo()
+#repeat{
+#  request <- getRequestInfo()
   
-  if(is.data.frame(request)){
-    startBlock = request$startBlock
-    loopsize = request$loopsize
-    endBlock = request$endBlock
-    mess_to = "d14127984@mydit.ie"
-    mess_from = mess_to
+#  if(is.data.frame(request)){
     
-    mess_subject <- createSubject(startBlock,endBlock)
-    template <- createTemplate(mess_to, mess_from, mess_subject)
-    state <- getBlockLoop(startBlock, endBlock, loopsize, template)
+
+    
+    startBlock = 46140
+    loopsize = 20
+    endBlock = 47000
+#    mess_to = "d14127984@mydit.ie"
+#    mess_from = mess_to
+    
+#    mess_subject <- createSubject(startBlock,endBlock)
+#    template <- createTemplate(mess_to, mess_from, mess_subject)
+    state <- getBlockLoop(startBlock, endBlock, loopsize)
 
     if(!is.character(state)){
       if(state==endBlock){
