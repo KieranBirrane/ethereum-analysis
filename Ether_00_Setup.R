@@ -28,7 +28,6 @@ library(jsonlite)   # Version:  jsonlite_0.9.19   # lsf.str("package:jsonlite") 
 library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")       # detach("package:gmailr", unload = TRUE)
 #library(RODBC)      # Version:  RODBC_1.3-14      # lsf.str("package:RODBC")        # detach("package:RODBC", unload = TRUE)
 
-?detach
 
 
 ##### Global variables ####
