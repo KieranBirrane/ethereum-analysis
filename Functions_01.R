@@ -286,9 +286,10 @@ moveFile <- function(from, to){
 # Get the latest email to read requests
 #
 #################################
-consolidateBlockFiles <- function(wd, clean = FALSE){
+consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
   
   # Setup variables
+  setwd(wd)
   if(clean){
     consol_type = "Cleaned"
   } else {
@@ -298,9 +299,10 @@ consolidateBlockFiles <- function(wd, clean = FALSE){
   createDirectory(consol_filename) # Create directory of output file if it doesn't exist
   row_count = 0
   tx_count = 0
+  block_filter <- factor(c(start_block:end_block))
   
   # Get list of files in directory
-  list_files <- list.files(global_read_wd, pattern = "*.csv", full.names = TRUE)
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
   
   # Get old file name and create new file name
   for(i in 1:length(list_files)){
@@ -314,31 +316,36 @@ consolidateBlockFiles <- function(wd, clean = FALSE){
     # Set file path and name
     file_path <- strsplit(old_file, "/")[[1]][1]
     file_name <- strsplit(old_file, "/")[[1]][2]
-    file_move <- ""# "\\Archived Data"
+    file_move <- "\\Archived Data"
     
     # Set new file name
     new_file <- paste(file_path,file_move,"/",file_name
                       ,sep="")
+    createDirectory(new_file) # Create directory of file if it doesn't exist
     
     
     
     # Open file and create new consolidated file
     read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character") # str(read_data[1,])
-    headers_eth <- list("data.number"
-                        ,"data.hash"
-                        ,"data.tx_count"
-                        ,"date.added"
-                        ,"file.from")
-    new_data <- cbind.data.frame(read_data[[headers_eth[[1]][1]]]
-                                 ,read_data[[headers_eth[[2]][1]]]
-                                 ,read_data[[headers_eth[[3]][1]]]
+    #headers_eth <- list("data.number"
+     #                   ,"data.hash"
+      #                  ,"data.tx_count"
+       #                 ,"date.added"
+        #                ,"file.from")
+    new_data_temp <- cbind.data.frame(read_data#[[headers_eth[[1]][1]]]
+                                 #,read_data[[headers_eth[[2]][1]]]
+                                 #,read_data[[headers_eth[[3]][1]]]
                                  ,Sys.time()
                                  ,file_name)
-    colnames(new_data) <- headers_eth
+    #colnames(new_data) <- headers_eth
     
     # Count number of rows
     row_count = row_count + nrow(read_data)
     tx_count = tx_count + sum(as.numeric(read_data$data.tx_count))
+    
+    # Filter blocks by input block parameters
+    new_data_temp <- new_data_temp[as.factor(new_data_temp$data.number) %in% block_filter,]
+    new_data <- new_data_temp
     
     # Filter out transactions != 0
     if(clean){
@@ -346,15 +353,7 @@ consolidateBlockFiles <- function(wd, clean = FALSE){
     }
     
     
-    
-    # Set output file name
-    if(i == 1){
-      set_start_block = min(read_data$data.number)
-    } else if (i == length(list_files)){
-      set_end_block = max(read_data$data.number)
-    }
-    
-    
+
     # Set write table information
     if(i==1){
       col_names = T
@@ -365,12 +364,14 @@ consolidateBlockFiles <- function(wd, clean = FALSE){
     }
     write.table(new_data, consol_filename, sep = ",", col.names = col_names, append = row_append, row.names = FALSE)
     
-    # Move read file to archive folder
-    moveFile(old_file, new_file)
+    # Move read file to archive folder, if it contained same rows in the selected range
+    if(nrow(read_data)==nrow(new_data_temp)){
+      moveFile(old_file, new_file)
+    }
   }
   
   # Create new file name
-  consol_filename_new <- setupBlockFile(set_start_block, set_end_block, type = consol_type)
+  consol_filename_new <- setupBlockFile(start_block, end_block, type = consol_type)
   moveFile(consol_filename,consol_filename_new)
   
   # Open new cleaned file and check the row count
@@ -381,16 +382,20 @@ consolidateBlockFiles <- function(wd, clean = FALSE){
     count_data <- tx_count
     count_file <- sum(as.numeric(read_data_consol$data.tx_count))
     count_blocks <- nrow(read_data_consol)
-    true_false <- count_data == count_file
+    true_false <- count_file == count_data
     info.df <- as.data.frame(list("TRUE_FALSE" = true_false
+                                  ,"Actual" = count_file
+                                  ,"Expected" = count_data
                                   ,"Input_Tx" = count_data
                                   ,"Output_Tx" = count_file
                                   ,"Output_Blocks" = count_blocks))
   } else {
     count_data <- row_count
     count_file <- nrow(read_data_consol)
-    true_false <- count_data == count_file
+    true_false <- count_file == end_block - start_block + 1
     info.df <- as.data.frame(list("TRUE_FALSE" = true_false
+                                  ,"Actual" = count_file
+                                  ,"Expected" = end_block - start_block + 1
                                   ,"Input_Blocks" = count_data
                                   ,"Output_Blocks" = count_file))
   }
