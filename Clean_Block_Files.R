@@ -7,7 +7,7 @@
 setwd(wd)
 wd <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
 wd_consol <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\Consolidated"
-start_block = 0 + 250000 + 250000 #+ 250000 #+ 250000
+start_block = 0 #+ 250000 #+ 250000 #+ 250000 #+ 250000
 end_block = start_block + 250000 - 1
 
 ##### Consolidate block information #####
