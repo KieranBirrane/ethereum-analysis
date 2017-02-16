@@ -1,21 +1,38 @@
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
-##### #####  Consolidate the block information  ##### #####
+##### ##### ## Prepare the block information ## ##### #####
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
+# Set up variables
 # getwd()
 setwd(wd)
 wd <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
-wd_clean <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\Consolidated"
-start_block = 0
-end_block = start_block + 1000 - 1
+wd_consol <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\Consolidated"
+start_block = 0 + 250000 + 250000 #+ 250000 #+ 250000
+end_block = start_block + 250000 - 1
 
-check_result <- consolidateBlockFiles(wd, start_block, end_block, clean = FALSE)
-check_result
+##### Consolidate block information #####
+consolidateBlocks <- consolidateBlockFiles(wd, start_block, end_block, clean = FALSE)
+consolidateBlocks
 
-check_result2 <- consolidateBlockFiles(wd_clean, start_block, end_block, clean = TRUE)
-check_result2
+# Check for missing blocks
+missing_blocks <- checkMissingBlocks(wd_consol)
+missing_blocks
+
+duplicate_blocks <- checkDuplicateBlocks(wd_consol)
+duplicate_blocks
 
 
+
+##### Clean block information #####
+cleanBlocks <- consolidateBlockFiles(wd_consol, start_block, end_block, clean = TRUE)
+cleanBlocks
+
+
+
+#########################################################################
+wd <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\Consolidated"
+
+check_test <- checkMissingBlocks(wd)
 
 #########################################################################
 

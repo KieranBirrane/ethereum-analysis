@@ -27,7 +27,7 @@ getLabels <- function(){
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned")){
+setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated")){
   # Set default to "Regular"
   if(missing(type)){
     type = "Regular"
@@ -38,6 +38,12 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
                     ,sep = "")
   } else if(type == "Consolidated" | type == "Cleaned") {
     filename <- paste(getwd(),"\\",type,"\\",type,"_",startBlock,"_",endBlock,".csv"
+                      ,sep = "")
+  } else if(type == "Missing") {
+    filename <- paste(getwd(),"\\Missing_Blocks_",Sys.Date(),".csv"
+                      ,sep = "")
+  } else if(type == "Duplicated") {
+    filename <- paste(getwd(),"\\Duplicate_Blocks_",Sys.Date(),".csv"
                       ,sep = "")
   }
   if(file.exists(filename)){file.remove(filename)}
@@ -276,6 +282,7 @@ createDirectory <- function(full_path){
 moveFile <- function(from, to){
   # Createa directory if it doesn't exist
   createDirectory(to)
+  if(file.exists(to)){file.remove(to)}
   file.rename(from = from, to = to)
 }
 
@@ -292,8 +299,10 @@ consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
   setwd(wd)
   if(clean){
     consol_type = "Cleaned"
+    check_file_name = "Consolidated"
   } else {
     consol_type = "Consolidated"
+    check_file_name = "Block_Info"
   }
   consol_filename <- setupBlockFile(0, global_last_block, type = consol_type)
   createDirectory(consol_filename) # Create directory of output file if it doesn't exist
@@ -309,8 +318,8 @@ consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
     
     # Check file name and move on if necessary
     old_file <- list_files[i]
-    if(regexpr("Block_Info",old_file) == -1){
-      next # If filename doesn't contain "Block_Info" then go to next file
+    if(regexpr(check_file_name,old_file) == -1){
+      next # If filename doesn't contain "Block_Info"/"Consolidated" then go to next file
     }
     
     # Set file path and name
@@ -327,21 +336,12 @@ consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
     
     # Open file and create new consolidated file
     read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character") # str(read_data[1,])
-    #headers_eth <- list("data.number"
-     #                   ,"data.hash"
-      #                  ,"data.tx_count"
-       #                 ,"date.added"
-        #                ,"file.from")
-    new_data_temp <- cbind.data.frame(read_data#[[headers_eth[[1]][1]]]
-                                 #,read_data[[headers_eth[[2]][1]]]
-                                 #,read_data[[headers_eth[[3]][1]]]
+    new_data_temp <- cbind.data.frame(read_data
                                  ,Sys.time()
                                  ,file_name)
-    #colnames(new_data) <- headers_eth
     
     # Count number of rows
     row_count = row_count + nrow(read_data)
-    tx_count = tx_count + sum(as.numeric(read_data$data.tx_count))
     
     # Filter blocks by input block parameters
     new_data_temp <- new_data_temp[as.factor(new_data_temp$data.number) %in% block_filter,]
@@ -350,6 +350,9 @@ consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
     # Filter out transactions != 0
     if(clean){
       new_data <- new_data[new_data$data.tx_count != 0,] # filter out where txn is not zero
+      if(nrow(new_data) != 0){
+        tx_count = tx_count + sum(as.numeric(read_data$data.tx_count))
+      }
     }
     
     
@@ -401,4 +404,149 @@ consolidateBlockFiles <- function(wd, start_block, end_block, clean = FALSE){
   }
   
   return(info.df)
+}
+
+
+
+##### checkMissingBlocks #####
+#
+# Check for missing blocks
+#
+##############################
+checkMissingBlocks <- function(wd){
+  
+  # Setup variables
+  setwd(wd)
+  miss_tx = 0
+  output_file <- setupBlockFile(start_block, end_block, type = "Missing")
+
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Consolidated",old_file) == -1){
+      next # If filename doesn't contain "Consolidated" then go to next file
+    }
+    
+    # Get block information from file name
+    snip <- old_file
+    snip_len <- nchar(snip)
+    
+    # Get file name
+    pos_start <- 0
+    pos_end <- regexpr("Consolidated_", snip)
+    snip <- substr(snip, pos_end, snip_len)
+    old_file_name <- snip
+    
+    # Get startBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    start_block = as.numeric(substr(snip, 0, pos_end))
+    
+    # Get endBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr(".csv", snip) - 1
+    end_block = as.numeric(substr(snip, 0, pos_end))
+    
+    
+    
+    # Import dataset to get blocks
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    read_data <- read_data$data.number
+    
+    
+                        
+    # Set up dataframe to sanity check against
+    checker <- as.data.frame(c(start_block:end_block))
+    colnames(checker) <- "checker.number"
+    
+    # Get missing blocks and create output dataframe
+    missing_blocks <- checker[!(checker$checker.number %in% as.factor(read_data)),]
+    
+    # Create output
+    if(length(missing_blocks) == 0){
+      none_missing <- as.data.frame(list("Blocks" = "None missing"))
+      missing_blocks_df <- cbind(none_missing,old_file_name)
+    }else{
+      missing_blocks_df <- cbind(missing_blocks,old_file_name)
+    }
+  
+    # Total number of missing blocks
+    miss_tx = miss_tx + length(missing_blocks)
+
+    # Write output to file
+    if(!file.exists(output_file)){
+      write.csv(missing_blocks_df, output_file, row.names = FALSE)
+    } else {
+      write.table(missing_blocks_df, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+      }
+  }
+  
+  return(miss_tx)
+}
+
+
+
+##### checkDuplicateBlocks #####
+#
+# Check for duplicated blocks
+#
+##############################
+checkDuplicateBlocks <- function(wd){
+  
+  # Setup variables
+  setwd(wd)
+  dupe_tx = 0
+  output_file <- setupBlockFile(0, 0, type = "Duplicates")
+  
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[6]
+    old_file_name <- substr(old_file, nchar(wd)+2, nchar(old_file))
+    if(regexpr("Consolidated",old_file_name) == -1){
+      next # If filename doesn't contain "Consolidated" then go to next file
+    }
+    
+    
+    
+    # Import dataset to get blocks
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    read_data <- read_data$data.number
+    
+    
+    
+    # Get duplicate blocks and create output dataframe
+    duplicate_blocks <- read_data[duplicated(read_data)]
+    
+    # Create output
+    if(length(duplicate_blocks) == 0){
+      none_duplicated <- as.data.frame(list("Blocks" = "None duplicated"))
+      duplicated_blocks_df <- cbind(none_duplicated,old_file_name)
+    }else{
+      duplicated_blocks_df <- cbind(duplicate_blocks,old_file_name)
+    }
+    
+    # Total number of missing blocks
+    dupe_tx = dupe_tx + length(duplicate_blocks)
+    
+    # Write output to file
+    if(!file.exists(output_file)){
+      write.csv(duplicated_blocks_df, output_file, row.names = FALSE)
+    } else {
+      write.table(duplicated_blocks_df, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
+  }
+  
+  return(dupe_tx)
 }
