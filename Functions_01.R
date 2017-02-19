@@ -147,8 +147,8 @@ sendMessageWithLabel <- function(email, label_id = "Label_31"){
 # Change a mail label to processed
 #
 ################################
-setEmailToProcessed <- function(email){
-  modify_message(email$id, add_labels = "Label_32", remove_labels = "Label_31")
+setEmailToProcessed <- function(email, remove_label){
+  modify_message(email$id, add_labels = "Label_32", remove_labels = remove_label)
 }
 
 
@@ -158,8 +158,8 @@ setEmailToProcessed <- function(email){
 # Get the latest email to read requests
 #
 ##########################
-getRequestInfo <- function(){
-  msgs <- messages(label_ids = global_label_read) # Get all messages
+getRequestInfo <- function(label){
+  msgs <- messages(label_ids = label) # Get all messages
   msgs_new <- message(msgs[[1]]$messages[[1]]$id, format = "full") # Get latest message
   snip <- msgs_new$snippet # Get message body
   snip_len <- nchar(snip) # Get snip length
@@ -193,11 +193,11 @@ getRequestInfo <- function(){
     )
     
     # Change message label
-    setEmailToProcessed(msgs_new)
+    setEmailToProcessed(msgs_new,label)
     
     return(info.df)
   }else if(checker == "Cancel"){
-    setEmailToProcessed(msgs_new)
+    setEmailToProcessed(msgs_new,label)
     
     return(checker)
   }else{
@@ -497,7 +497,7 @@ checkMissingBlocks <- function(wd){
 #
 # Check for duplicated blocks
 #
-##############################
+################################
 checkDuplicateBlocks <- function(wd){
   
   # Setup variables
@@ -549,4 +549,56 @@ checkDuplicateBlocks <- function(wd){
   }
   
   return(dupe_tx)
+}
+
+
+
+##### downloadMissingBlocks #####
+#
+# Download the blocks retrieved from the checkMissingBlocks function
+#
+#################################
+downloadMissingBlocks <- function(wd){
+
+  # Setup variables
+  setwd(wd)
+
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Missing_Blocks",old_file) == -1){
+      next # If filename doesn't contain "Missing_Blocks" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    missing_blocks <- read_data$missing_blocks
+    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
+    start_block <- paste("Missing_",min(missing_blocks)
+                         ,sep = "") # Set up name so that it contains the word "Missing"
+    end_block <- max(missing_blocks)
+    output_file <- setupBlockFile(start_block, end_block)
+
+    # Get block information
+    len_missing <- length(missing_blocks)
+    
+    # Get new block information
+    getInfo <- getBlock(missing_blocks[1])
+    write.csv(getInfo, output_file, row.names = FALSE)
+    
+    for(i in 2:len_missing){
+      # Get new block information
+      getInfo <- getBlock(missing_blocks[i])
+      
+      # Write outputs to file
+      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+      }
+  }
+  
+  return("Missing blocks retrieved")
 }

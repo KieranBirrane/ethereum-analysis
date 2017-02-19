@@ -35,7 +35,8 @@ global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
 global_wd_block_info = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
 global_last_block = 3127805
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
-global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Request Processed"
+global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Emails from R/Request Processed"
+global_label_cancel = "Label_34"        # "Year 2/Semester 2/Dissertation/Emails from R/Cancel"
 global_secret_file = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Google_API\\d14127984_secret_file.json"
 
 

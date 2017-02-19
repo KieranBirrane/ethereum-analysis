@@ -6,10 +6,17 @@
 setwd(global_wd)
 
 
-
 repeat{
   # Get the latest request
-  request <- getRequestInfo()
+  cancel_request <- getRequestInfo(global_label_cancel)
+  
+  # Set request depending on if a cancelation was issued
+  if(cancel_request=="Cancel"){
+    request <- cancel_request
+  }else{
+    process_request <- getRequestInfo(global_label_read)
+    request <- process_request
+  }
   
   if(is.data.frame(request)){
     # Initialise variables if data.frame with request information is provided
@@ -53,5 +60,4 @@ repeat{
     # Make the system sleep if there is no request to cancel or process data
     Sys.sleep(30)
   }
-  
 }
