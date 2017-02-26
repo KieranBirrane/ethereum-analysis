@@ -1,7 +1,7 @@
 ##### ##### ##### ##### ##### ##### #####
 #####  Ethereum Block Data - Setup  #####
 ##### ##### ##### ##### ##### ##### #####
-# Block - 3,127,805 with 16,332,490 transactions
+# Block - 3,200,000 with X transactions
 # First Transaction - Block 46,147
 
 # rm(list=ls(all=TRUE))
@@ -33,7 +33,7 @@ library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")   
 ##### Global variables ####
 global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
 global_wd_block_info = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
-global_last_block = 3127805
+global_last_block = 3200000
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
 global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Emails from R/Request Processed"
 global_label_cancel = "Label_34"        # "Year 2/Semester 2/Dissertation/Emails from R/Cancel"

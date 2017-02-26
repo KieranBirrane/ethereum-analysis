@@ -71,7 +71,10 @@ test_getRequestInfo
 
 
 # getBlockLoop
-test_getBlockLoop <- getBlockLoop(0,10,5, test_template)
+st_loop = 3084565
+ed_loop = 3084567 + 1
+lp_size = ed_loop - st_loop
+test_getBlockLoop <- getBlockLoop(st_loop,ed_loop,lp_size)
 test_getBlockLoop
 
 

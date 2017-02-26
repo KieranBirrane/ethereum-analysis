@@ -42,7 +42,7 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
   } else if(type == "Missing") {
     filename <- paste(getwd(),"\\Missing_Blocks_",Sys.Date(),".csv"
                       ,sep = "")
-  } else if(type == "Duplicated") {
+  } else if(type == "Duplicates") {
     filename <- paste(getwd(),"\\Duplicate_Blocks_",Sys.Date(),".csv"
                       ,sep = "")
   }
@@ -512,7 +512,7 @@ checkDuplicateBlocks <- function(wd){
   for(i in 1:length(list_files)){
     
     # Check file name and move on if necessary
-    old_file <- list_files[6]
+    old_file <- list_files[i]
     old_file_name <- substr(old_file, nchar(wd)+2, nchar(old_file))
     if(regexpr("Consolidated",old_file_name) == -1){
       next # If filename doesn't contain "Consolidated" then go to next file
