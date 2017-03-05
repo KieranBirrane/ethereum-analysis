@@ -27,7 +27,7 @@ getLabels <- function(){
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated")){
+setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated","Tx")){
   # Set default to "Regular"
   if(missing(type)){
     type = "Regular"
@@ -44,6 +44,9 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
                       ,sep = "")
   } else if(type == "Duplicates") {
     filename <- paste(getwd(),"\\Duplicate_Blocks_",Sys.Date(),".csv"
+                      ,sep = "")
+  } else if(type == "Tx") {
+    filename <- paste(getwd(),"\\Tx\\Tx_Info_",startBlock,"_",endBlock,".csv"
                       ,sep = "")
   }
   if(file.exists(filename)){file.remove(filename)}
@@ -601,4 +604,119 @@ downloadMissingBlocks <- function(wd){
   }
   
   return("Missing blocks retrieved")
+}
+
+##### getTxLoop #####
+#
+# Start loop for downloading transactions
+#
+#####################
+getTxLoop <- function(cleaned_wd, startpoint, loop_size){
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
+                              sep = "")
+  
+  # Read which blocks have been already downloaded
+  checker <- read.table(dwnl_block_filename, header = TRUE, sep = ",", colClasses = "character")
+  
+  # Get list of files in directory
+  list_files <- list.files(cleaned_wd, pattern = "*.csv", full.names = TRUE)
+  
+  tryCatch(
+    {
+      # Get file name to check
+      for(i in 1:length(list_files)){
+        # Check file name and move on if necessary
+        old_file <- list_files[i]
+        if(regexpr("Cleaned",old_file) == -1){
+          next # If filename doesn't contain "Cleaned" then go to next file
+        }
+
+        # Get blocks from missing_blocks file
+        read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+        blocks <- read_data$data.number
+        
+        # Ignore blocks already downloaded
+        blocks <- blocks[!(as.factor(blocks) %in% checker$Block_Number)]
+        blocks <- blocks[order(as.numeric(blocks))]
+        start_block <- min(as.numeric(blocks))
+
+        # Constrain loop to loopsize
+        loop_constraint <- factor(c(startpoint:(startpoint+loop_size)))
+        blocks <- blocks[(as.factor(blocks) %in% as.factor(loop_constraint))]
+        
+        # Get ending point
+        end_block <- max(as.numeric(blocks))
+        output_file <- setupBlockFile(start_block, end_block, "Tx")
+        
+        # Get block information
+        len_missing <- length(blocks)
+        if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
+        
+        # Get new block information
+        getInfo <- getBlockTx(blocks[1])
+        write.csv(getInfo, output_file, row.names = FALSE)
+        
+        # Add block to downloaded file
+        downloaded_block = data.frame(
+          list("Block_Number"=as.integer(blocks[1])
+               ,"Time"=Sys.time()
+          )
+        )
+        write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+
+        # Loop through remaining blocks
+        for(i in 2:len_missing){
+          # Get new block information
+          i=i+1
+          iteration = as.numeric(blocks[i-1])
+          getInfo <- getBlockTx(blocks[i])
+
+          # Write outputs to file
+          write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+          
+          # Add block to downloaded file
+          downloaded_block = data.frame(
+            list("Block_Number"=as.integer(blocks[i])
+                 ,"Time"=Sys.time()
+                 )
+          )
+          write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+        }
+      }
+    }
+    , error = function(e){
+      # Rename the output file
+      file.rename(output_file,setupBlockFile(start_block, iteration - 1, "Tx"))
+      }
+    , finally = {
+      # Return failure block
+      return(iteration)
+    }
+  )
+  
+  return("Run Completed")
+}
+
+##### resetDownloadedBlocks #####
+#
+# REset the file for tracking downloaded blocks
+#
+#################################
+resetDownloadedBlocks <- function(cleaned_wd){
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
+                              sep = "")
+  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
+  
+  downloaded_block = data.frame(
+    list("Block_Number"
+         ,"Time"
+    )
+  )
+  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
+  
 }

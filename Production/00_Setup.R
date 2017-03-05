@@ -33,6 +33,7 @@ library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")   
 ##### Global variables ####
 global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
 global_wd_block_info = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
+global_wd_cleaned_blocks = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned"
 global_last_block = 3200000
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
 global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Emails from R/Request Processed"

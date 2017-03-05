@@ -15,7 +15,7 @@ test_getBlockCount
 
 
 # getBlock
-test_getBlock <- getBlock(417425)
+test_getBlock <- getBlock(3116718)
 test_getBlock
 
 test_start_time <- Sys.time()
