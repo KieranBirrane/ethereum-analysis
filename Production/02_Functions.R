@@ -594,6 +594,8 @@ downloadMissingBlocks <- function(wd){
     getInfo <- getBlock(missing_blocks[1])
     write.csv(getInfo, output_file, row.names = FALSE)
     
+    if(len_missing<2){next}
+    
     for(i in 2:len_missing){
       # Get new block information
       getInfo <- getBlock(missing_blocks[i])
@@ -606,6 +608,8 @@ downloadMissingBlocks <- function(wd){
   return("Missing blocks retrieved")
 }
 
+
+
 ##### getTxLoop #####
 #
 # Start loop for downloading transactions
@@ -616,6 +620,7 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
   setwd(cleaned_wd)
   dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
                               sep = "")
+  iteration = startpoint + loop_size
   
   # Read which blocks have been already downloaded
   checker <- read.table(dwnl_block_filename, header = TRUE, sep = ",", colClasses = "character")
@@ -640,13 +645,13 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
         # Ignore blocks already downloaded
         blocks <- blocks[!(as.factor(blocks) %in% checker$Block_Number)]
         blocks <- blocks[order(as.numeric(blocks))]
-        start_block <- min(as.numeric(blocks))
 
         # Constrain loop to loopsize
         loop_constraint <- factor(c(startpoint:(startpoint+loop_size)))
         blocks <- blocks[(as.factor(blocks) %in% as.factor(loop_constraint))]
         
         # Get ending point
+        start_block <- min(as.numeric(blocks))
         end_block <- max(as.numeric(blocks))
         output_file <- setupBlockFile(start_block, end_block, "Tx")
         
@@ -669,26 +674,30 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
         # Loop through remaining blocks
         for(i in 2:len_missing){
           # Get new block information
-          i=i+1
           iteration = as.numeric(blocks[i-1])
           getInfo <- getBlockTx(blocks[i])
-
-          # Write outputs to file
-          write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
           
-          # Add block to downloaded file
-          downloaded_block = data.frame(
-            list("Block_Number"=as.integer(blocks[i])
-                 ,"Time"=Sys.time()
-                 )
-          )
-          write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+          # If all transactions are retrieved then add them to the file, else repeat
+          if(sum(getInfo$status)=length(getInfo$status)){
+            # Write outputs to file
+            write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+            
+            # Add block to downloaded file
+            downloaded_block = data.frame(
+              list("Block_Number"=as.integer(blocks[i])
+                   ,"Time"=Sys.time()
+              )
+            )
+            write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+          }else{
+              i=i-1 # Repeat previous attempt
+          }
         }
       }
     }
     , error = function(e){
       # Rename the output file
-      file.rename(output_file,setupBlockFile(start_block, iteration - 1, "Tx"))
+      file.rename(output_file,setupBlockFile(start_block, iteration, "Tx"))
       }
     , finally = {
       # Return failure block
@@ -698,6 +707,8 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
   
   return("Run Completed")
 }
+
+
 
 ##### resetDownloadedBlocks #####
 #
@@ -719,4 +730,372 @@ resetDownloadedBlocks <- function(cleaned_wd){
   )
   write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
   
+}
+
+
+
+##### renameTxInfo #####
+#
+# Rename the Tx_Info files
+#
+#####################
+# wdir = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx"
+renameTxInfo <- function(wdir){
+  # Setup variables
+  setwd(wdir)
+  
+  # Get list of files in directory
+  list_files <- list.files(wdir, pattern = "*.csv", full.names = TRUE)
+  
+    # Get file name to check
+    for(i in 1:length(list_files)){
+      # Check file name and move on if necessary
+      old_file <- list_files[i]
+      if(regexpr("Tx_Info",old_file) == -1){
+        next # If filename doesn't contain "Cleaned" then go to next file
+      }
+      
+      # Get blocks from missing_blocks file
+      read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+      blocks <- read_data$data.block_id
+
+      # Get ending point
+      start_block <- min(as.numeric(blocks))
+      end_block <- max(as.numeric(blocks))
+      output_file <- setupBlockFile(start_block, end_block, "Tx")
+      
+      # Get block information
+      len_missing <- length(blocks)
+      if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
+      
+      # Get new block information
+      file.rename(old_file,output_file)
+
+    }
+  
+  return("Run Completed")
+}
+
+
+
+##### combineTx #####
+#
+# Combine Tx files
+#
+#####################
+combineTx <- function(wdir, startpoint, endpoint){
+  # Setup variables
+  setwd(wdir)
+  count_files = 0
+  
+  # Get list of files in directory
+  list_files <- list.files(wdir, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Tx_Info",old_file) == -1){
+      next # If filename doesn't contain "Cleaned" then go to next file
+    }
+    
+    # Get block information from file name
+    snip <- old_file
+    snip_len <- nchar(snip)
+    
+    # Get file name
+    pos_start <- 0
+    pos_end <- regexpr("Info_", snip)
+    snip <- substr(snip, pos_end, snip_len)
+    old_file_name <- snip
+    new_file <- paste(wdir,"\\Consolidated\\Tx_",old_file_name,
+                     sep="")
+    
+    # Get startBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    start_block = as.numeric(substr(snip, 0, pos_end))
+    
+    # Get endBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr(".csv", snip) - 1
+    end_block = as.numeric(substr(snip, 0, pos_end))
+    
+    # If file is outside consolidation points, ignore it
+    if(end_block<startpoint || start_block>endpoint){
+      next
+    }
+
+    # Get blocks from missing_blocks file
+    count_files = count_files + 1
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    if(count_files==1){
+      consol_blocks <- read_data
+    }else{
+      consol_blocks <- rbind(consol_blocks,read_data)
+    }
+    
+    # Move file
+    moveFile(old_file,new_file)
+  }
+  
+  
+  # Setup output file
+  consol_blocks <- consol_blocks[order(as.numeric(consol_blocks$data.block_id)),]
+  start_block <- min(as.numeric(consol_blocks$data.block_id))
+  end_block <- max(as.numeric(consol_blocks$data.block_id))
+  
+  ideal = paste(startpoint,"_",endpoint,sep="")
+  actual = paste("(",start_block,"_",end_block,")",sep="")
+  output_file <- setupBlockFile(ideal, actual, "Tx")
+  
+  # Write output file
+  write.csv(consol_blocks, output_file, row.names = FALSE)
+  
+  return("Run Completed")
+}
+
+
+
+##### checkMissingTx #####
+#
+# Check for missing transactions
+#
+##########################
+checkMissingTx <- function(tx_wd, block_wd){
+  
+  # Setup variables
+  setwd(tx_wd)
+  miss_tx = 0
+  output_file <- setupBlockFile(start_block, end_block, type = "Missing")
+  
+  # Get list of files in directory
+  list_files <- list.files(tx_wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Tx_Info_",old_file) == -1){
+      next # If filename doesn't contain "Consolidated" then go to next file
+    }
+    
+    # Get block information from file name
+    snip <- old_file
+    snip_len <- nchar(snip)
+    
+    # Get file name
+    pos_start <- 0
+    pos_end <- regexpr("Info_", snip)
+    snip <- substr(snip, pos_end, snip_len)
+    old_file_name <- snip
+    
+    # Get startBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    start_block = as.numeric(substr(snip, 0, pos_end))
+    
+    # Get endBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    end_block = as.numeric(substr(snip, 0, pos_end))
+    
+    
+
+    # Import dataset to get blocks
+    cleaned_block_file = paste(block_wd,"\\Cleaned_",start_block,"_",end_block,".csv",
+                               sep="")
+    read_data_block <- read.table(cleaned_block_file, header = TRUE, sep = ",", colClasses = "character")
+    read_data_block <- read_data_block$data.number
+    
+    # Import dataset to get Tx
+    read_data_tx <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    read_data_tx <- read_data_tx$data.block_id
+    
+    # Get missing blocks and create output dataframe
+    missing_blocks <- read_data_block[!(as.factor(read_data_block) %in% as.factor(read_data_tx))]
+    
+    # Create output
+    if(length(missing_blocks) == 0){
+      none_missing <- as.data.frame(list("missing_blocks" = "None missing"))
+      missing_blocks_df <- cbind(none_missing,old_file_name)
+    }else{
+      missing_blocks_df <- cbind(missing_blocks,old_file_name)
+    }
+    
+    # Total number of missing blocks
+    miss_tx = miss_tx + length(missing_blocks)
+    
+    # Write output to file
+    if(!file.exists(output_file)){
+      write.csv(missing_blocks_df, output_file, row.names = FALSE)
+    } else {
+      write.table(missing_blocks_df, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
+  }
+  
+  return(miss_tx)
+}
+
+
+
+##### downloadMissingTx #####
+#
+# Download the tx of the blocks retrieved from the checkMissingTx function
+#
+#############################
+downloadMissingTx <- function(wd){
+  
+  # Setup variables
+  setwd(wd)
+  
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Missing_Blocks",old_file) == -1){
+      next # If filename doesn't contain "Missing_Blocks" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    missing_blocks <- read_data$missing_blocks
+    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
+    start_block <- paste("Missing_",min(missing_blocks)
+                         ,sep = "") # Set up name so that it contains the word "Missing"
+    end_block <- max(missing_blocks)
+    output_file <- setupBlockFile(start_block, end_block)
+    
+    # Get block information
+    len_missing <- length(missing_blocks)
+    
+    # Get new block information
+    getInfo <- getBlockTx(missing_blocks[1])
+    write.csv(getInfo, output_file, row.names = FALSE)
+    
+    if(len_missing<2){next}
+    
+    for(i in 2:len_missing){
+      # Get new block information
+      getInfo <- getBlockTx(missing_blocks[i])
+      
+      # Write outputs to file
+      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
+  }
+  
+  return("Missing blocks retrieved")
+}
+
+
+
+##### checkDuplicateTx #####
+#
+# Check for duplicate transactions
+#
+##########################
+checkDuplicateTx <- function(tx_wd, block_wd){
+  
+  # Setup variables
+  setwd(tx_wd)
+  dupe_tx = 0
+  output_file <- setupBlockFile(0, 0, type = "Duplicates")
+  
+  # Get list of files in directory
+  list_files <- list.files(tx_wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Tx_Info_",old_file) == -1){
+      next # If filename doesn't contain "Consolidated" then go to next file
+    }
+    
+    # Get block information from file name
+    snip <- old_file
+    snip_len <- nchar(snip)
+    
+    # Get file name
+    pos_start <- 0
+    pos_end <- regexpr("Info_", snip)
+    snip <- substr(snip, pos_end, snip_len)
+    old_file_name <- snip
+    
+    # Get startBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    start_block = as.numeric(substr(snip, 0, pos_end))
+    
+    # Get endBlock    
+    pos_start <- regexpr("_", snip) + 1
+    snip <- substr(snip, pos_start, snip_len)
+    pos_end <- regexpr("_", snip) - 1
+    end_block = as.numeric(substr(snip, 0, pos_end))
+    
+    
+    # Headers
+    header <- c("Block_Number","Block_Tx","Tx_Count")
+    
+    # Import dataset to get blocks
+    cleaned_block_file = paste(block_wd,"\\Cleaned_",start_block,"_",end_block,".csv",
+                               sep="")
+    read_data_block <- read.table(cleaned_block_file, header = TRUE, sep = ",", colClasses = "character")
+    read_data_block <- read_data_block[,c("data.number","data.tx_count")]
+    read_data_block$data.tx_count <- as.numeric(read_data_block$data.tx_count)
+    read_data_block$col_3 = 0 # Add new column
+    colnames(read_data_block) <- header
+
+    # Import dataset to get Tx
+    read_data_tx <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character",
+                               na.strings = "NA")
+    read_data_tx <- read_data_tx[(is.na(read_data_tx$data.txIndex)==TRUE),] # Keep only Tx
+    read_data_tx <- count(read_data_tx,"data.block_id")
+    read_data_tx$col_3 = 0 # Add new column
+    read_data_tx <- read_data_tx[,c(1,3,2)] # Reorder in preparation of join
+    colnames(read_data_tx) <- header
+
+    # Join datasets and calculate differences
+    joined_data = rbind(read_data_block,read_data_tx)
+    agg_data <- aggregate(cbind(joined_data$Block_Tx,joined_data$Tx_Count) ~ joined_data$Block_Number
+                                  ,data = joined_data
+                                  ,FUN = sum)
+    colnames(agg_data) <- header
+    agg_data$Difference <- agg_data$Block_Tx-agg_data$Tx_Count
+    
+    # Filter to check for duplicates
+    duplicate_blocks <- agg_data[agg_data$Difference!=0,"Block_Number"]
+
+    # Create output
+    if(length(duplicate_blocks) == 0){
+      none_duplicated <- as.data.frame(list("duplicate_blocks" = "None missing"))
+      duplicate_blocks_df <- cbind(none_duplicated,old_file_name)
+    }else{
+      duplicate_blocks_df <- cbind(duplicate_blocks,old_file_name)
+    }
+    
+    # Total number of duplicate blocks
+    dupe_tx = dupe_tx + length(duplicate_blocks)
+    
+    # Write output to file
+    if(!file.exists(output_file)){
+      write.csv(duplicate_blocks_df, output_file, row.names = FALSE)
+    } else {
+      write.table(duplicate_blocks_df, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
+  }
+  
+  return(dupe_tx)
 }

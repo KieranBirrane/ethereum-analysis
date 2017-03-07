@@ -11,10 +11,12 @@ start_point = state
 loop_size = 50000
 
 
+
 repeat{
   # Start download of Tx
   if(!is.character(state)){
     state <- getTxLoop(global_wd_cleaned_blocks, start_point, loop_size)
+    if(is.na(state)){state=state+loop_size}
     start_point <- state # Set the next iteration point
   }
 

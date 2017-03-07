@@ -60,7 +60,7 @@ getBlockTx <- function(blockno){
   fn <- requestFromEtherchain(fn)
   
   if(nchar(fn)==22){
-    fn <- setEmptyBlockTx(blockno)
+    fn <- "No transactions"
   } else {
     fn <- data.frame(fromJSON(fn))
   }

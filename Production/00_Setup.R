@@ -21,13 +21,14 @@
 # install.packages("jsonlite")
 # install.packages("RODBC")
 # install.packages("gmailr")
+# install.packages("plyr")
 #library(installr)   # Version:  installr_0.17.5   # lsf.str("package:installr")     # detach("package:installr", unload = TRUE)
 #library(RJSONIO)    # Version:  RJSONIO_1.3-0     # lsf.str("package:RJSONIO")      # detach("package:RJSONIO", unload = TRUE)
 library(RCurl)      # Version:  RCurl_1.95-4.8    # lsf.str("package:RCurl")        # detach("package:RCurl", unload = TRUE)
 library(jsonlite)   # Version:  jsonlite_0.9.19   # lsf.str("package:jsonlite")     # detach("package:jsonlite", unload = TRUE)
 library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")       # detach("package:gmailr", unload = TRUE)
 #library(RODBC)      # Version:  RODBC_1.3-14      # lsf.str("package:RODBC")        # detach("package:RODBC", unload = TRUE)
-
+library(plyr)       # Version:  plyr_1.8.4     # lsf.str("package:plyr")        # detach("package:plyr", unload = TRUE)
 
 
 ##### Global variables ####
