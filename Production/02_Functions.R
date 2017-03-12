@@ -650,14 +650,14 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
         loop_constraint <- factor(c(startpoint:(startpoint+loop_size)))
         blocks <- blocks[(as.factor(blocks) %in% as.factor(loop_constraint))]
         
+        # Get block information
+        len_missing <- length(blocks)
+        if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
+
         # Get ending point
         start_block <- min(as.numeric(blocks))
         end_block <- max(as.numeric(blocks))
         output_file <- setupBlockFile(start_block, end_block, "Tx")
-        
-        # Get block information
-        len_missing <- length(blocks)
-        if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
         
         # Get new block information
         getInfo <- getBlockTx(blocks[1])
@@ -678,7 +678,7 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
           getInfo <- getBlockTx(blocks[i])
           
           # If all transactions are retrieved then add them to the file, else repeat
-          if(sum(getInfo$status)=length(getInfo$status)){
+          if(sum(getInfo$status)==length(getInfo$status)){
             # Write outputs to file
             write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
             

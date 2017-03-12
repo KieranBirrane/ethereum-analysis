@@ -5,8 +5,8 @@
 # resetDownloadedBlocks(global_wd_cleaned_blocks)
 
 # getwd()
-setwd(global_wd)
-state = 0
+setwd(global_wd_cleaned_blocks)
+state = 750000
 start_point = state
 loop_size = 50000
 
@@ -16,7 +16,7 @@ repeat{
   # Start download of Tx
   if(!is.character(state)){
     state <- getTxLoop(global_wd_cleaned_blocks, start_point, loop_size)
-    if(is.na(state)){state=state+loop_size}
+    if(state=="Run Completed"){start_point=start_point+loop_size}
     start_point <- state # Set the next iteration point
   }
 
