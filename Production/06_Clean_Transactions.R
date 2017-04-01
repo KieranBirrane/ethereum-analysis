@@ -8,8 +8,8 @@ wd_cleaned_blocks <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data
 wd_downloaded <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx"
 wd_renamed_tx <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx\\Tx"
 wd_cleaned_tx <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx\\Tx\\Tx"
-setwd(wd)
-start_block = 250000*2
+setwd(wd_cleaned_blocks)
+start_block = 250000*4
 end_block = start_block + 250000 - 1
 
 ##### Consolidate transaction information #####

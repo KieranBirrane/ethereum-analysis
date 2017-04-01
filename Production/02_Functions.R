@@ -1076,7 +1076,7 @@ checkDuplicateTx <- function(tx_wd, block_wd){
     agg_data$Difference <- agg_data$Block_Tx-agg_data$Tx_Count
     
     # Filter to check for duplicates
-    duplicate_blocks <- agg_data[agg_data$Difference!=0,"Block_Number"]
+    duplicate_blocks <- agg_data[agg_data$Difference<0,"Block_Number"]
 
     # Create output
     if(length(duplicate_blocks) == 0){
