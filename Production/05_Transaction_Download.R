@@ -6,9 +6,9 @@
 
 # getwd()
 setwd(global_wd_cleaned_blocks)
-state = 250000*11
+state = 250000*12
 start_point = state
-loop_size = 50000
+loop_size = 5000
 
 
 

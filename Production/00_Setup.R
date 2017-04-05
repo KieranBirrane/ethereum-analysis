@@ -3,6 +3,7 @@
 ##### ##### ##### ##### ##### ##### #####
 # Block - 3,200,000 with X transactions
 # First Transaction - Block 46,147
+# Timestamp -  2017-02-17T12:30:51.000Z
 
 # rm(list=ls(all=TRUE))
 # getwd()

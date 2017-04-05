@@ -9,8 +9,8 @@ wd_downloaded <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Bl
 wd_renamed_tx <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx\\Tx"
 wd_cleaned_tx <- "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned\\Tx\\Tx\\Tx"
 setwd(wd_cleaned_blocks)
-start_block = 250000*4
-end_block = start_block + 250000 - 1
+start_block = 250000*12
+end_block = start_block + 200000 #250000 - 1
 
 ##### Consolidate transaction information #####
 # Rename Tx_Info files to ensure names are correct
@@ -34,3 +34,7 @@ duplicate_tx <- checkDuplicateTx(wd_cleaned_tx, wd_cleaned_blocks)
 duplicate_tx
 
 # If there are duplicate blocks, remove the duplicates
+
+# Error in block 2082050
+block2082050 <- getBlock(2082050)
+blockTx2082050 <- getBlockTx(2082050)
