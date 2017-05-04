@@ -28,14 +28,17 @@
 library(RCurl)      # Version:  RCurl_1.95-4.8    # lsf.str("package:RCurl")        # detach("package:RCurl", unload = TRUE)
 library(jsonlite)   # Version:  jsonlite_0.9.19   # lsf.str("package:jsonlite")     # detach("package:jsonlite", unload = TRUE)
 library(gmailr)     # Version:  gmailr_0.7.1      # lsf.str("package:gmailr")       # detach("package:gmailr", unload = TRUE)
-#library(RODBC)      # Version:  RODBC_1.3-14      # lsf.str("package:RODBC")        # detach("package:RODBC", unload = TRUE)
+library(RODBC)      # Version:  RODBC_1.3-14      # lsf.str("package:RODBC")        # detach("package:RODBC", unload = TRUE)
 library(plyr)       # Version:  plyr_1.8.4     # lsf.str("package:plyr")        # detach("package:plyr", unload = TRUE)
 
 
 ##### Global variables ####
-global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data"
-global_wd_block_info = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info"
-global_wd_cleaned_blocks = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Ethereum_Data\\Block_Info\\02_Cleaned"
+global_github = "C:\\Users\\temp.user\\Documents\\GitHub\\ethereum-analysis"
+global_sql_ps = paste(global_github,"\\SQL\\Prepared_Statements",sep="")
+global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Dissertation_Data"
+global_wd_block_info = paste(global_wd,"\\00_Raw_Data",sep="")
+global_wd_consol_blocks = paste(global_wd,"\\01_Consolidated",sep="")
+global_wd_cleaned_blocks = paste(global_wd,"\\02_Cleaned",sep="")
 global_last_block = 3200000
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
 global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Emails from R/Request Processed"

@@ -70,6 +70,34 @@ getBlockTx <- function(blockno){
 
 
 
+##### getAddresses #####
+#
+# Returns the address information for multiple addresses
+#
+######################
+getAddresses <- function(addresses){
+  # https://etherchain.org/api/account/multiple/:ids
+  # ids  String  The addresses, separated by commas
+  fn <- paste("https://etherchain.org/api/account/multiple/",as.character(addresses[1]),sep = "")
+  
+  if(length(addresses)>1){
+    for(i in 2:len(addresses))
+    fn <- paste(fn,",",as.character(addresses[i]),sep = "")
+  }
+  
+  fn <- requestFromEtherchain(fn)
+  
+  if(nchar(fn)==22){
+    fn <- "No data"
+  } else {
+    fn <- data.frame(fromJSON(fn))
+  }
+  
+  return(fn)
+}
+
+
+
 ##### setEmptyBlockTx #####
 #
 # Returns an empty block transactions result

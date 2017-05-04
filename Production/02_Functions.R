@@ -27,7 +27,7 @@ getLabels <- function(){
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated","Tx")){
+setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated","Tx","Address")){
   # Set default to "Regular"
   if(missing(type)){
     type = "Regular"
@@ -47,6 +47,9 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
                       ,sep = "")
   } else if(type == "Tx") {
     filename <- paste(getwd(),"\\Tx\\Tx_Info_",startBlock,"_",endBlock,".csv"
+                      ,sep = "")
+  } else if(type == "Address") {
+    filename <- paste(getwd(),"\\Address\\Addresses_Summary.csv"
                       ,sep = "")
   }
   if(file.exists(filename)){file.remove(filename)}
@@ -712,7 +715,7 @@ getTxLoop <- function(cleaned_wd, startpoint, loop_size){
 
 ##### resetDownloadedBlocks #####
 #
-# REset the file for tracking downloaded blocks
+# Reset the file for tracking downloaded blocks
 #
 #################################
 resetDownloadedBlocks <- function(cleaned_wd){
@@ -1098,4 +1101,166 @@ checkDuplicateTx <- function(tx_wd, block_wd){
   }
   
   return(dupe_tx)
+}
+
+
+
+##### hexToString #####
+#
+# Convert Hexadecimal to String
+#
+##########################
+etherExtraToString <- function(hexa){
+  # http://stackoverflow.com/questions/29251934/how-to-convert-a-hex-string-to-text-in-r
+  
+  hexa_convert <- substr(hexa,3,nchar(hexa))
+  if(nchar(hexa_convert)==0){
+    str_out <- ""
+  }else{
+    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
+    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
+  }
+  out_list <- str_out
+    
+    if(length(hexa)>1){
+  for(i in 2:length(hexa)){
+    hexa_convert <- substr(hexa[i],3,nchar(hexa[i]))
+    if(nchar(hexa_convert)==0){str_out = ""
+    }else{
+    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
+    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
+    }
+    
+    out_list <- rbind(out_list,str_out)
+  }
+  }
+
+  return(out_list)
+}
+
+
+
+##### resetDownloadedAddresses #####
+#
+# Reset the file for tracking downloaded addresses
+#
+#################################
+resetDownloadedAddresses <- function(cleaned_wd){
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
+                              sep = "")
+  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
+  
+  downloaded_block = data.frame(
+    list("data.coinbase"
+         ,"frequency"
+         ,"source"
+         ,"data.number"
+    )
+  )
+  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
+  
+}
+
+
+
+##### getAddresses #####
+#
+# Start loop for getting all addresses who have downloaded blocks
+#
+#####################
+getAddresses <- function(cleaned_wd,file_check){
+  # Setup variables
+  setwd(cleaned_wd)
+  
+  # Get list of files in directory
+  list_files <- list.files(cleaned_wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Setup output filename
+  output_file <- paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
+                       sep = "")
+
+  # Get file name to check
+  num_loop = length(list_files)
+  for(i in 1:num_loop){
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr(file_check,old_file) == -1){
+      next # If filename doesn't contain "Cleaned" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    blocks <- as.data.frame(cbind(read_data$data.number,read_data$data.coinbase))
+    colnames(blocks) <- cbind("data.number","data.coinbase")
+    addresses = as.data.frame(table(blocks$data.coinbase))
+    addresses$source <- splitFile(old_file)[2]
+    addresses$data.number <- ""
+    colnames(addresses) <- cbind("data.coinbase","frequency","source","data.number")
+    addresses <- addresses[order(-as.numeric(addresses$frequency)),]
+
+    # For each address, add in the blocks they downloaded
+    for(i in 1:nrow(blocks)){
+      blk = as.character(blocks[i,"data.number"])
+      add = as.character(blocks[i,"data.coinbase"])
+      addresses[as.factor(addresses$data.coinbase) == add, ]$data.number <- 
+        paste(addresses[as.factor(addresses$data.coinbase) == add, ]$data.number,";",blk,sep="")
+    }
+
+    # Populate address table
+    write.table(addresses, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+
+  }
+  
+  return("Run Completed")
+}
+
+
+
+##### getTxAddresses #####
+#
+# Start loop for getting all addresses who have participated in transactions
+#
+#####################
+getTxAddresses <- function(cleaned_wd,file_check){
+  cleaned_wd=global_wd_cleaned_tx
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  
+  # Get list of files in directory
+  list_files <- list.files(cleaned_wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Setup output filename
+  output_file <- paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
+                       sep = "")
+  
+  # Get file name to check
+  num_loop = length(list_files)
+  for(i in 1:num_loop){
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr(file_check,old_file) == -1){
+      next # If filename doesn't contain "Cleaned" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    tx_sender <- as.vector(read_data$data.sender)
+    tx_recipient <- as.vector(read_data$data.recipient)
+    addresses <- as.data.frame(c(tx_sender,tx_recipient))
+    colnames(addresses) <- "addresses"
+
+    addressestb = as.data.frame(table(addresses))
+    addressestb <- addressestb[order(-as.numeric(addressestb$Freq)),]
+    addressestb$source <- splitFile(old_file)[2]
+
+    # Populate address table
+    write.table(addressestb, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    
+  }
+  
+  return("Run Completed")
 }
