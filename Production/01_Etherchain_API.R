@@ -9,7 +9,7 @@
 
 
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
-##### ##### ##### ##### ## Blocks # ##### ##### ##### #####
+##### ##### ##### #### Data Download #### ##### ##### #####
 ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
 ##### getBlockCount #####
@@ -70,21 +70,15 @@ getBlockTx <- function(blockno){
 
 
 
-##### getAddresses #####
+##### getAddressInfo #####
 #
 # Returns the address information for multiple addresses
 #
 ######################
-getAddresses <- function(addresses){
+getAddressInfo <- function(addresses){
   # https://etherchain.org/api/account/multiple/:ids
   # ids  String  The addresses, separated by commas
-  fn <- paste("https://etherchain.org/api/account/multiple/",as.character(addresses[1]),sep = "")
-  
-  if(length(addresses)>1){
-    for(i in 2:len(addresses))
-    fn <- paste(fn,",",as.character(addresses[i]),sep = "")
-  }
-  
+  fn <- paste("https://etherchain.org/api/account/multiple/",as.character(addresses),sep = "")
   fn <- requestFromEtherchain(fn)
   
   if(nchar(fn)==22){
@@ -94,6 +88,26 @@ getAddresses <- function(addresses){
   }
   
   return(fn)
+}
+
+
+
+
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### Others #### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+
+##### requestFromEtherchain #####
+#
+# Sends request to Etherchain, including sleep to overcome request limit
+#
+#################################
+requestFromEtherchain <- function(url){
+  # Sys.sleep(0.3) # The API is currently limited to a maximum of 10 requests per 3 seconds and IP
+  request = getURL(url)
+  
+  return(request)
 }
 
 
@@ -126,23 +140,4 @@ setEmptyBlockTx <- function(){
   
   return(df)
   
-}
-
-
-
-
-##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
-##### ##### ##### ##### ##### ##### ##### Others #### ##### ##### ##### ##### ##### #####
-##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
-
-##### requestFromEtherchain #####
-#
-# Sends request to Etherchain, including sleep to overcome request limit
-#
-#################################
-requestFromEtherchain <- function(url){
-  # Sys.sleep(0.3) # The API is currently limited to a maximum of 10 requests per 3 seconds and IP
-  request = getURL(url)
-  
-  return(request)
 }

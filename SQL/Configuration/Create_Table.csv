@@ -1,0 +1,135 @@
+--,--,--,--,--,--,--
+,/*,,,,,--
+,Name:,Create_Tables,,,,--
+,Description:,Create tables for input data,,,,--
+,,,,,,--
+,Date:,03/05/2017,,,,--
+,*/,,,,,--
+,/*,,,,,--
+,CREATE SCHEMA input;,,,,,--
+,CREATE SCHEMA control_table;,,,,,
+,GO,,,,,--
+,*/,,,,,--
+,,,,,,--
+,/********** Control Tables **********/,,,,,
+,"IF OBJECT_ID('control_table.Data_Definition', 'U') IS NOT NULL",,,,,--
+,DROP TABLE control_table.Data_Definition,,,,,--
+,GO,,,,,--
+,CREATE TABLE,control_table.Data_Definition,(,,,--
+,,[TABLE_SCHEMA],VARCHAR,(20),NULL,--
+,",",[TABLE_NAME],VARCHAR,(50),NULL,--
+,",",[COLUMN_NAME],VARCHAR,(50),NULL,--
+,",",[DATA_TYPE],VARCHAR,(20),NULL,--
+,",",[ORDINAL_POSITION],BIGINT,,NULL,--
+,",",[INCLUDE_COLUMN],VARCHAR,(1),NULL,--
+,",",[INTERIM_DATA_TYPE],VARCHAR,(20),NULL,--
+,",",[INTERIM_DATA_TYPE_PRECISION],VARCHAR,(20),NULL,--
+,",",[OUTPUT_DATA_TYPE],VARCHAR,(20),NULL,--
+,",",[OUTPUT_DATA_TYPE_PRECISION],VARCHAR,(20),NULL,--
+,",",[OUTPUT_COLUMN_NAME],VARCHAR,(50),NULL,--
+,),,,,,--
+,GO,,,,,--
+,,,,,,--
+,,,,,,--
+,,,,,,--
+,,,,,,--
+,,,,,,--
+,/********** Input Tables **********/,,,,,--
+,"IF OBJECT_ID('input.Ethereum_Blocks', 'U') IS NOT NULL",,,,,--
+,DROP TABLE input.Ethereum_Blocks,,,,,--
+,GO,,,,,--
+,CREATE TABLE,input.Ethereum_Blocks,(,,,--
+,,[Status],VARCHAR,(1),NULL,--
+,",",[Data_Number],VARCHAR,(10),NULL,--
+,",",[Data_Hash],VARCHAR,(66),NULL,--
+,",",[Data_ParentHash],VARCHAR,(66),NULL,--
+,",",[Data_UncleHash],VARCHAR,(66),NULL,--
+,",",[Data_Coinbase],VARCHAR,(42),NULL,--
+,",",[Data_Root],VARCHAR,(66),NULL,--
+,",",[Data_TxHash],VARCHAR,(66),NULL,--
+,",",[Data_Difficulty],DECIMAL,"(24,0)",NULL,--
+,",",[Data_GasLimit],BIGINT,,NULL,--
+,",",[Data_GasUsed],BIGINT,,NULL,--
+,",",[Data_Time],DATETIME,,NULL,--
+,",",[Data_Extra],VARCHAR,(128),NULL,--
+,",",[Data_MixDigest],VARCHAR,(66),NULL,--
+,",",[Data_Nonce],VARCHAR,(18),NULL,--
+,",",[Data_Tx_Count],INT,,NULL,--
+,",",[Data_Uncle_Count],INT,,NULL,--
+,",",[Data_Size],INT,,NULL,--
+,",",[Data_BlockTime],VARCHAR,(10),NULL,--
+,",",[Data_Reward],DECIMAL,"(24,0)",NULL,--
+--,",",[Sys_Time],DATETIME,,NULL,--
+--,",",[File_Name],VARCHAR,(50),NULL,--
+,),,,,,--
+,GO,,,,,--
+,,,,,,--
+--,DROP INDEX,input.Ethereum_Blocks.block_number,,,,--
+--,CREATE UNIQUE CLUSTERED INDEX,block_number,,,,--
+--,ON input.Ethereum_Blocks,(,[Data_Number],);,,--
+--,ALTER INDEX,block_number,ON,input.Ethereum_Blocks,DISABLE;,--
+,,,,,,--
+,,,,,,--
+,,,,,,--
+,"IF OBJECT_ID('input.Ethereum_Transactions', 'U') IS NOT NULL",,,,,--
+,DROP TABLE input.Ethereum_Transactions,,,,,--
+,GO,,,,,--
+,CREATE TABLE,input.Ethereum_Transactions,(,,,--
+,,[Status],VARCHAR,(1),NULL,--
+,",",[Data_Hash],VARCHAR,(66),NULL,--
+,",",[Data_Sender],VARCHAR,(66),NULL,--
+,",",[Data_Recipient],VARCHAR,(66),NULL,--
+,",",[Data_AccountNonce],INT,,NULL,--
+,",",[Data_Price],DECIMAL,"(24,0)",NULL,--
+,",",[Data_Gaslimit],BIGINT,,NULL,--
+,",",[Data_Amount],DECIMAL,"(38,0)",NULL,--
+,",",[Data_BlockID],VARCHAR,(10),NULL,--
+,",",[Data_Time],DATETIME,,NULL,--
+,",",[Data_NewContract],INT,,NULL,--
+,",",[Data_IsContractTx],VARCHAR,(50),NULL,--
+,",",[Data_BlockHash],VARCHAR,(66),NULL,--
+,",",[Data_Parenthash],VARCHAR,(66),NULL,--
+,",",[Data_TxIndex],VARCHAR,(20),NULL,--
+,",",[Data_Gasused],BIGINT,,NULL,--
+,",",[Data_TxType],VARCHAR,(20),NULL,--
+,),,,,,--
+,GO,,,,,--
+,,,,,,--
+--,DROP INDEX,input.Ethereum_Transactions,,,,--
+--,CREATE UNIQUE CLUSTERED INDEX,transaction_hash,,,,--
+--,ON input.Ethereum_Transactions,(,[Data_Hash],);,,--
+--,ALTER INDEX,transaction_hash,ON,input.Ethereum_Transactions,DISABLE;,--
+,,,,,,
+,,,,,,
+,,,,,,
+,"IF OBJECT_ID('input.Ethereum_Addresses', 'U') IS NOT NULL",,,,,--
+,DROP TABLE input.Ethereum_Addresses,,,,,--
+,GO,,,,,--
+,CREATE TABLE,input.Ethereum_Addresses,(,,,--
+,,[Status],VARCHAR,(1),NULL,--
+,",",[Data_Address],VARCHAR,(66),NULL,--
+,",",[Data_Balance],DECIMAL,"(38,0)",NULL,--
+,",",[Data_Nonce],VARCHAR,(24),NULL,--
+,",",[Data_Code],VARCHAR,(MAX),NULL,--
+,",",[Data_Name],VARCHAR,(50),NULL,--
+,",",[Data_Storage],VARCHAR,(50),NULL,--
+,",",[Data_FirstSeen],VARCHAR,(24),NULL,--
+,),,,,,--
+,GO,,,,,--
+,,,,,,--
+--,DROP INDEX,input.Ethereum_Addresses,,,,--
+--,CREATE UNIQUE CLUSTERED INDEX,address_hash,,,,--
+--,ON input.input.Ethereum_Addresses,(,[Data_Address],);,,--
+--,ALTER INDEX,address_hash,ON,input.Ethereum_Addresses,DISABLE;,--
+,,,,,,
+,,,,,,
+,,,,,,
+,"IF OBJECT_ID('input.Addresses', 'U') IS NOT NULL",,,,,--
+,DROP TABLE input.Addresses,,,,,--
+,GO,,,,,--
+,CREATE TABLE,input.Addresses,(,,,--
+,,[Data_Coinbase],VARCHAR,(42),NULL,--
+,",",[Frequency],BIGINT,,NULL,--
+,",",[Source],VARCHAR,(50),NULL,--
+,),,,,,--
+,GO,,,,,--

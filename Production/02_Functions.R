@@ -4,30 +4,16 @@
 
 
 
-##### getLabels #####
-#
-# Returns all labels from Gmail
-#
-#####################
-getLabels <- function(){
-  my_labels <- labels()
-  base = cbind(my_labels$labels[[1]]$id,my_labels$labels[[1]]$name)
-  for(k in 2:length(my_labels$labels)){
-    base2 = cbind(my_labels$labels[[k]]$id,my_labels$labels[[k]]$name)
-    base = rbind(base,base2)
-  }
-
-  return(base[order(base[,1]),])
-}
-
-
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### Files ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
 ##### setupBlockFile #####
 #
 # Define the file name of the block outputs
 #
 ##########################
-setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated","Tx","Address")){
+setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated","Cleaned","Missing","Duplicated","Tx","Address"), manual = NULL){
   # Set default to "Regular"
   if(missing(type)){
     type = "Regular"
@@ -35,7 +21,7 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
   
   if(type == "Regular"){
     filename <- paste(getwd(),"\\","Block_Info_",startBlock,"_",endBlock,".csv"
-                    ,sep = "")
+                      ,sep = "")
   } else if(type == "Consolidated" | type == "Cleaned") {
     filename <- paste(getwd(),"\\",type,"\\",type,"_",startBlock,"_",endBlock,".csv"
                       ,sep = "")
@@ -51,10 +37,144 @@ setupBlockFile <- function(startBlock,endBlock, type = c("Regular","Consolidated
   } else if(type == "Address") {
     filename <- paste(getwd(),"\\Address\\Addresses_Summary.csv"
                       ,sep = "")
+  } else if(!is.null(manual)) {
+    filename <- paste(getwd(),"\\",manual
+                      ,sep="")
   }
   if(file.exists(filename)){file.remove(filename)}
   
   return(filename)
+}
+
+
+
+##### createDirectory #####
+#
+# Create directory if it doesn't exist
+# http://stackoverflow.com/questions/10266963/moving-files-between-folders
+####################
+createDirectory <- function(full_path){
+  todir <- dirname(full_path)
+  if(!isTRUE(file.info(todir)$isdir)){
+    dir.create(todir, recursive=TRUE)
+  }
+}
+
+
+
+##### moveFile #####
+#
+# Move file from one place to another
+# http://stackoverflow.com/questions/10266963/moving-files-between-folders
+####################
+moveFile <- function(from, to){
+  # Createa directory if it doesn't exist
+  createDirectory(to)
+  if(file.exists(to)){file.remove(to)}
+  file.rename(from = from, to = to)
+}
+
+
+
+##### resetDownloadedBlocks #####
+#
+# Reset the file for tracking downloaded blocks
+#
+#################################
+resetDownloadedBlocks <- function(cleaned_wd){
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
+                              sep = "")
+  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
+  
+  downloaded_block = data.frame(
+    list("Block_Number"
+         ,"Time"
+    )
+  )
+  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
+  
+}
+
+
+
+##### resetAddresses #####
+#
+# Reset the file for tracking addresses
+#
+#################################
+resetAddresses <- function(cleaned_wd){
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
+                              sep = "")
+  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
+  
+  downloaded_block = data.frame(
+    list("data.coinbase"
+         ,"frequency"
+         ,"source"
+         ,"data.number"
+    )
+  )
+  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
+  
+}
+
+
+
+##### resetDownloadedAddresses #####
+#
+# Reset the file for tracking downloaded addresses
+#
+#################################
+resetDownloadedAddresses <- function(cleaned_wd){
+  
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_address_filename = paste(cleaned_wd,"\\Downloaded_Addresses.csv",
+                              sep = "")
+  if(file.exists(dwnl_address_filename)){file.remove(dwnl_address_filename)} # Delete old file
+  
+  downloaded_address = data.frame(
+    list("Address"
+         ,"Time"
+    )
+  )
+  write.table(downloaded_address[1,], dwnl_address_filename, sep = ",", col.names = F, append = F, row.names = F)
+  
+}
+
+
+
+
+
+
+
+
+
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### Gmail ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+
+##### getLabels #####
+#
+# Returns all labels from Gmail
+#
+#####################
+getLabels <- function(){
+  my_labels <- labels()
+  base = cbind(my_labels$labels[[1]]$id,my_labels$labels[[1]]$name)
+  for(k in 2:length(my_labels$labels)){
+    base2 = cbind(my_labels$labels[[k]]$id,my_labels$labels[[k]]$name)
+    base = rbind(base,base2)
+  }
+
+  return(base[order(base[,1]),])
 }
 
 
@@ -214,6 +334,17 @@ getRequestInfo <- function(label){
 
 
 
+
+
+
+
+
+
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### # Data Download # ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+
 ##### getBlockLoop #####
 #
 # Start loop for downloading blocks
@@ -266,33 +397,305 @@ getBlockLoop <- function(startBlock,endBlock,loopsize){
 
 
 
-##### createDirectory #####
+##### downloadMissingBlocks #####
 #
-# Create directory if it doesn't exist
-# http://stackoverflow.com/questions/10266963/moving-files-between-folders
-####################
-createDirectory <- function(full_path){
-  todir <- dirname(full_path)
-  if(!isTRUE(file.info(todir)$isdir)){
-    dir.create(todir, recursive=TRUE)
+# Download the blocks retrieved from the checkMissingBlocks function
+#
+#################################
+downloadMissingBlocks <- function(wd){
+  
+  # Setup variables
+  setwd(wd)
+  
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Missing_Blocks",old_file) == -1){
+      next # If filename doesn't contain "Missing_Blocks" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    missing_blocks <- read_data$missing_blocks
+    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
+    start_block <- paste("Missing_",min(missing_blocks)
+                         ,sep = "") # Set up name so that it contains the word "Missing"
+    end_block <- max(missing_blocks)
+    output_file <- setupBlockFile(start_block, end_block)
+    
+    # Get block information
+    len_missing <- length(missing_blocks)
+    
+    # Get new block information
+    getInfo <- getBlock(missing_blocks[1])
+    write.csv(getInfo, output_file, row.names = FALSE)
+    
+    if(len_missing<2){next}
+    
+    for(i in 2:len_missing){
+      # Get new block information
+      getInfo <- getBlock(missing_blocks[i])
+      
+      # Write outputs to file
+      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
   }
+  
+  return("Missing blocks retrieved")
 }
 
 
 
-##### moveFile #####
+##### getTxLoop #####
 #
-# Move file from one place to another
-# http://stackoverflow.com/questions/10266963/moving-files-between-folders
-####################
-moveFile <- function(from, to){
-  # Createa directory if it doesn't exist
-  createDirectory(to)
-  if(file.exists(to)){file.remove(to)}
-  file.rename(from = from, to = to)
+# Start loop for downloading transactions
+#
+#####################
+getTxLoop <- function(cleaned_wd, startpoint, loop_size){
+  # Setup variables
+  setwd(cleaned_wd)
+  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
+                              sep = "")
+  iteration = startpoint + loop_size
+  
+  # Read which blocks have been already downloaded
+  checker <- read.table(dwnl_block_filename, header = TRUE, sep = ",", colClasses = "character")
+  
+  # Get list of files in directory
+  list_files <- list.files(cleaned_wd, pattern = "*.csv", full.names = TRUE)
+  
+  tryCatch(
+    {
+      # Get file name to check
+      for(i in 1:length(list_files)){
+        # Check file name and move on if necessary
+        old_file <- list_files[i]
+        if(regexpr("Cleaned",old_file) == -1){
+          next # If filename doesn't contain "Cleaned" then go to next file
+        }
+        
+        # Get blocks from missing_blocks file
+        read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+        blocks <- read_data$data.number
+        
+        # Ignore blocks already downloaded
+        blocks <- blocks[!(as.factor(blocks) %in% checker$Block_Number)]
+        blocks <- blocks[order(as.numeric(blocks))]
+        
+        # Constrain loop to loopsize
+        loop_constraint <- factor(c(startpoint:(startpoint+loop_size)))
+        blocks <- blocks[(as.factor(blocks) %in% as.factor(loop_constraint))]
+        
+        # Get block information
+        len_missing <- length(blocks)
+        if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
+        
+        # Get ending point
+        start_block <- min(as.numeric(blocks))
+        end_block <- max(as.numeric(blocks))
+        output_file <- setupBlockFile(start_block, end_block, "Tx")
+        
+        # Get new block information
+        getInfo <- getBlockTx(blocks[1])
+        write.csv(getInfo, output_file, row.names = FALSE)
+        
+        # Add block to downloaded file
+        downloaded_block = data.frame(
+          list("Block_Number"=as.integer(blocks[1])
+               ,"Time"=Sys.time()
+          )
+        )
+        write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+        
+        # Loop through remaining blocks
+        for(i in 2:len_missing){
+          # Get new block information
+          iteration = as.numeric(blocks[i-1])
+          getInfo <- getBlockTx(blocks[i])
+          
+          # If all transactions are retrieved then add them to the file, else repeat
+          if(sum(getInfo$status)==length(getInfo$status)){
+            # Write outputs to file
+            write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+            
+            # Add block to downloaded file
+            downloaded_block = data.frame(
+              list("Block_Number"=as.integer(blocks[i])
+                   ,"Time"=Sys.time()
+              )
+            )
+            write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
+          }else{
+            i=i-1 # Repeat previous attempt
+          }
+        }
+      }
+    }
+    , error = function(e){
+      # Rename the output file
+      file.rename(output_file,setupBlockFile(start_block, iteration, "Tx"))
+    }
+    , finally = {
+      # Return failure block
+      return(iteration)
+    }
+  )
+  
+  return("Run Completed")
 }
 
 
+
+##### downloadMissingTx #####
+#
+# Download the tx of the blocks retrieved from the checkMissingTx function
+#
+#############################
+downloadMissingTx <- function(wd){
+  
+  # Setup variables
+  setwd(wd)
+  
+  # Get list of files in directory
+  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
+  
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Missing_Blocks",old_file) == -1){
+      next # If filename doesn't contain "Missing_Blocks" then go to next file
+    }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    missing_blocks <- read_data$missing_blocks
+    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
+    start_block <- paste("Missing_",min(missing_blocks)
+                         ,sep = "") # Set up name so that it contains the word "Missing"
+    end_block <- max(missing_blocks)
+    output_file <- setupBlockFile(start_block, end_block)
+    
+    # Get block information
+    len_missing <- length(missing_blocks)
+    
+    # Get new block information
+    getInfo <- getBlockTx(missing_blocks[1])
+    write.csv(getInfo, output_file, row.names = FALSE)
+    
+    if(len_missing<2){next}
+    
+    for(i in 2:len_missing){
+      # Get new block information
+      getInfo <- getBlockTx(missing_blocks[i])
+      
+      # Write outputs to file
+      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    }
+  }
+  
+  return("Missing blocks retrieved")
+}
+
+
+
+##### downloadAddresses #####
+#
+# Download user addresses
+#
+#############################
+downloadAddresses <- function(wd,loop_size,num_loops){
+  
+  # Setup variables
+  setwd(wd)
+  loop <- c(1:loop_size)
+  
+  # Get list of files in directory
+  input_file <- paste(wd,"\\Addresses_Summary.csv",
+                      sep = "")
+  output_file <- paste(wd,"\\Address_Info.csv",
+                       sep = "")
+  downloaded_file <- paste(wd,"\\Downloaded_Addresses.csv",
+                           sep = "")
+  
+  # Set up data
+  read_data <- read.table(input_file, header = TRUE, sep = ",", colClasses = "character")
+  read_data <- as.matrix(read_data)
+  downloaded_data <- read.table(downloaded_file, header = TRUE, sep = ",", colClasses = "character")
+  
+  # If download file is empty, add a row to it to start
+  if(length(as.matrix(downloaded_data))==0){
+    data_address <- getAddresses(read_data[1,])
+    write.csv(data_address, output_file, row.names = FALSE)
+    addresses <- read_data[!(as.factor(read_data) %in% read_data[1]),]
+  
+    # Add row to downloaded file
+    downloaded_address = data.frame(
+      list("Address"=read_data[1,]
+           ,"Time"=Sys.time()
+      )
+    )
+    write.table(downloaded_address, downloaded_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    
+  } else {
+    addresses <- read_data[!(as.factor(read_data) %in% downloaded_data$Address)]
+  }
+  
+  # Drop data frames once used to initiase the addresses
+  rm(read_data)
+  rm(downloaded_data)
+  
+  # Order the addresses
+  addresses <- addresses[order(addresses)]
+  
+  # Begin downloading data
+  num_loop <- min(num_loops,ceiling(length(addresses)/loop_size))
+  for(i in 1:num_loop){
+    # Set download set
+    address_down <- addresses[row(as.matrix(addresses)) %in% loop]
+    address_next <- addresses[!row(as.matrix(addresses)) %in% loop]
+    
+    # Download data
+    add_set <- convertArrayToString(address_down)
+    add_downl <- getAddressInfo(add_set)
+    
+    # Write outputs to file
+    write.table(add_downl, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    
+    # Add block to downloaded file
+    downloaded_address = data.frame(
+      list("Address"=address_down
+           ,"Time"=Sys.time()
+      )
+    )
+    write.table(downloaded_address, downloaded_file, sep = ",", col.names = F, append = T, row.names = FALSE)
+    
+    # Reset block of addresses
+    addresses <- address_next
+  }
+  
+  return("Addresses retrieved")
+}
+
+
+
+
+
+
+
+
+
+
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### #### Data Reconciliation #### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
 ##### consolidateBlockFiles #####
 #
@@ -559,184 +962,6 @@ checkDuplicateBlocks <- function(wd){
 
 
 
-##### downloadMissingBlocks #####
-#
-# Download the blocks retrieved from the checkMissingBlocks function
-#
-#################################
-downloadMissingBlocks <- function(wd){
-
-  # Setup variables
-  setwd(wd)
-
-  # Get list of files in directory
-  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
-  
-  # Get file name to check
-  for(i in 1:length(list_files)){
-    
-    # Check file name and move on if necessary
-    old_file <- list_files[i]
-    if(regexpr("Missing_Blocks",old_file) == -1){
-      next # If filename doesn't contain "Missing_Blocks" then go to next file
-    }
-    
-    # Get blocks from missing_blocks file
-    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
-    missing_blocks <- read_data$missing_blocks
-    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
-    start_block <- paste("Missing_",min(missing_blocks)
-                         ,sep = "") # Set up name so that it contains the word "Missing"
-    end_block <- max(missing_blocks)
-    output_file <- setupBlockFile(start_block, end_block)
-
-    # Get block information
-    len_missing <- length(missing_blocks)
-    
-    # Get new block information
-    getInfo <- getBlock(missing_blocks[1])
-    write.csv(getInfo, output_file, row.names = FALSE)
-    
-    if(len_missing<2){next}
-    
-    for(i in 2:len_missing){
-      # Get new block information
-      getInfo <- getBlock(missing_blocks[i])
-      
-      # Write outputs to file
-      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
-      }
-  }
-  
-  return("Missing blocks retrieved")
-}
-
-
-
-##### getTxLoop #####
-#
-# Start loop for downloading transactions
-#
-#####################
-getTxLoop <- function(cleaned_wd, startpoint, loop_size){
-  # Setup variables
-  setwd(cleaned_wd)
-  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
-                              sep = "")
-  iteration = startpoint + loop_size
-  
-  # Read which blocks have been already downloaded
-  checker <- read.table(dwnl_block_filename, header = TRUE, sep = ",", colClasses = "character")
-  
-  # Get list of files in directory
-  list_files <- list.files(cleaned_wd, pattern = "*.csv", full.names = TRUE)
-  
-  tryCatch(
-    {
-      # Get file name to check
-      for(i in 1:length(list_files)){
-        # Check file name and move on if necessary
-        old_file <- list_files[i]
-        if(regexpr("Cleaned",old_file) == -1){
-          next # If filename doesn't contain "Cleaned" then go to next file
-        }
-
-        # Get blocks from missing_blocks file
-        read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
-        blocks <- read_data$data.number
-        
-        # Ignore blocks already downloaded
-        blocks <- blocks[!(as.factor(blocks) %in% checker$Block_Number)]
-        blocks <- blocks[order(as.numeric(blocks))]
-
-        # Constrain loop to loopsize
-        loop_constraint <- factor(c(startpoint:(startpoint+loop_size)))
-        blocks <- blocks[(as.factor(blocks) %in% as.factor(loop_constraint))]
-        
-        # Get block information
-        len_missing <- length(blocks)
-        if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
-
-        # Get ending point
-        start_block <- min(as.numeric(blocks))
-        end_block <- max(as.numeric(blocks))
-        output_file <- setupBlockFile(start_block, end_block, "Tx")
-        
-        # Get new block information
-        getInfo <- getBlockTx(blocks[1])
-        write.csv(getInfo, output_file, row.names = FALSE)
-        
-        # Add block to downloaded file
-        downloaded_block = data.frame(
-          list("Block_Number"=as.integer(blocks[1])
-               ,"Time"=Sys.time()
-          )
-        )
-        write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
-
-        # Loop through remaining blocks
-        for(i in 2:len_missing){
-          # Get new block information
-          iteration = as.numeric(blocks[i-1])
-          getInfo <- getBlockTx(blocks[i])
-          
-          # If all transactions are retrieved then add them to the file, else repeat
-          if(sum(getInfo$status)==length(getInfo$status)){
-            # Write outputs to file
-            write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
-            
-            # Add block to downloaded file
-            downloaded_block = data.frame(
-              list("Block_Number"=as.integer(blocks[i])
-                   ,"Time"=Sys.time()
-              )
-            )
-            write.table(downloaded_block, dwnl_block_filename, sep = ",", col.names = F, append = T, row.names = FALSE)
-          }else{
-              i=i-1 # Repeat previous attempt
-          }
-        }
-      }
-    }
-    , error = function(e){
-      # Rename the output file
-      file.rename(output_file,setupBlockFile(start_block, iteration, "Tx"))
-      }
-    , finally = {
-      # Return failure block
-      return(iteration)
-    }
-  )
-  
-  return("Run Completed")
-}
-
-
-
-##### resetDownloadedBlocks #####
-#
-# Reset the file for tracking downloaded blocks
-#
-#################################
-resetDownloadedBlocks <- function(cleaned_wd){
-  
-  # Setup variables
-  setwd(cleaned_wd)
-  dwnl_block_filename = paste(cleaned_wd,"\\Downloaded_Blocks.csv",
-                              sep = "")
-  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
-  
-  downloaded_block = data.frame(
-    list("Block_Number"
-         ,"Time"
-    )
-  )
-  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
-  
-}
-
-
-
 ##### renameTxInfo #####
 #
 # Rename the Tx_Info files
@@ -750,31 +975,31 @@ renameTxInfo <- function(wdir){
   # Get list of files in directory
   list_files <- list.files(wdir, pattern = "*.csv", full.names = TRUE)
   
-    # Get file name to check
-    for(i in 1:length(list_files)){
-      # Check file name and move on if necessary
-      old_file <- list_files[i]
-      if(regexpr("Tx_Info",old_file) == -1){
-        next # If filename doesn't contain "Cleaned" then go to next file
-      }
-      
-      # Get blocks from missing_blocks file
-      read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
-      blocks <- read_data$data.block_id
-
-      # Get ending point
-      start_block <- min(as.numeric(blocks))
-      end_block <- max(as.numeric(blocks))
-      output_file <- setupBlockFile(start_block, end_block, "Tx")
-      
-      # Get block information
-      len_missing <- length(blocks)
-      if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
-      
-      # Get new block information
-      file.rename(old_file,output_file)
-
+  # Get file name to check
+  for(i in 1:length(list_files)){
+    # Check file name and move on if necessary
+    old_file <- list_files[i]
+    if(regexpr("Tx_Info",old_file) == -1){
+      next # If filename doesn't contain "Cleaned" then go to next file
     }
+    
+    # Get blocks from missing_blocks file
+    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
+    blocks <- read_data$data.block_id
+    
+    # Get ending point
+    start_block <- min(as.numeric(blocks))
+    end_block <- max(as.numeric(blocks))
+    output_file <- setupBlockFile(start_block, end_block, "Tx")
+    
+    # Get block information
+    len_missing <- length(blocks)
+    if(len_missing==0){next} # If there are no more block Tx to download, go to next file 
+    
+    # Get new block information
+    file.rename(old_file,output_file)
+    
+  }
   
   return("Run Completed")
 }
@@ -796,7 +1021,7 @@ combineTx <- function(wdir, startpoint, endpoint){
   
   # Get file name to check
   for(i in 1:length(list_files)){
-
+    
     # Check file name and move on if necessary
     old_file <- list_files[i]
     if(regexpr("Tx_Info",old_file) == -1){
@@ -813,7 +1038,7 @@ combineTx <- function(wdir, startpoint, endpoint){
     snip <- substr(snip, pos_end, snip_len)
     old_file_name <- snip
     new_file <- paste(wdir,"\\Consolidated\\Tx_",old_file_name,
-                     sep="")
+                      sep="")
     
     # Get startBlock    
     pos_start <- regexpr("_", snip) + 1
@@ -831,7 +1056,7 @@ combineTx <- function(wdir, startpoint, endpoint){
     if(end_block<startpoint || start_block>endpoint){
       next
     }
-
+    
     # Get blocks from missing_blocks file
     count_files = count_files + 1
     read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
@@ -910,7 +1135,7 @@ checkMissingTx <- function(tx_wd, block_wd){
     end_block = as.numeric(substr(snip, 0, pos_end))
     
     
-
+    
     # Import dataset to get blocks
     cleaned_block_file = paste(block_wd,"\\Cleaned_",start_block,"_",end_block,".csv",
                                sep="")
@@ -944,60 +1169,6 @@ checkMissingTx <- function(tx_wd, block_wd){
   }
   
   return(miss_tx)
-}
-
-
-
-##### downloadMissingTx #####
-#
-# Download the tx of the blocks retrieved from the checkMissingTx function
-#
-#############################
-downloadMissingTx <- function(wd){
-  
-  # Setup variables
-  setwd(wd)
-  
-  # Get list of files in directory
-  list_files <- list.files(wd, pattern = "*.csv", full.names = TRUE)
-  
-  # Get file name to check
-  for(i in 1:length(list_files)){
-    
-    # Check file name and move on if necessary
-    old_file <- list_files[i]
-    if(regexpr("Missing_Blocks",old_file) == -1){
-      next # If filename doesn't contain "Missing_Blocks" then go to next file
-    }
-    
-    # Get blocks from missing_blocks file
-    read_data <- read.table(old_file, header = TRUE, sep = ",", colClasses = "character")
-    missing_blocks <- read_data$missing_blocks
-    missing_blocks <- missing_blocks[missing_blocks!="None missing"]
-    start_block <- paste("Missing_",min(missing_blocks)
-                         ,sep = "") # Set up name so that it contains the word "Missing"
-    end_block <- max(missing_blocks)
-    output_file <- setupBlockFile(start_block, end_block)
-    
-    # Get block information
-    len_missing <- length(missing_blocks)
-    
-    # Get new block information
-    getInfo <- getBlockTx(missing_blocks[1])
-    write.csv(getInfo, output_file, row.names = FALSE)
-    
-    if(len_missing<2){next}
-    
-    for(i in 2:len_missing){
-      # Get new block information
-      getInfo <- getBlockTx(missing_blocks[i])
-      
-      # Write outputs to file
-      write.table(getInfo, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
-    }
-  }
-  
-  return("Missing blocks retrieved")
 }
 
 
@@ -1105,67 +1276,6 @@ checkDuplicateTx <- function(tx_wd, block_wd){
 
 
 
-##### hexToString #####
-#
-# Convert Hexadecimal to String
-#
-##########################
-etherExtraToString <- function(hexa){
-  # http://stackoverflow.com/questions/29251934/how-to-convert-a-hex-string-to-text-in-r
-  
-  hexa_convert <- substr(hexa,3,nchar(hexa))
-  if(nchar(hexa_convert)==0){
-    str_out <- ""
-  }else{
-    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
-    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
-  }
-  out_list <- str_out
-    
-    if(length(hexa)>1){
-  for(i in 2:length(hexa)){
-    hexa_convert <- substr(hexa[i],3,nchar(hexa[i]))
-    if(nchar(hexa_convert)==0){str_out = ""
-    }else{
-    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
-    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
-    }
-    
-    out_list <- rbind(out_list,str_out)
-  }
-  }
-
-  return(out_list)
-}
-
-
-
-##### resetDownloadedAddresses #####
-#
-# Reset the file for tracking downloaded addresses
-#
-#################################
-resetDownloadedAddresses <- function(cleaned_wd){
-  
-  # Setup variables
-  setwd(cleaned_wd)
-  dwnl_block_filename = paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
-                              sep = "")
-  if(file.exists(dwnl_block_filename)){file.remove(dwnl_block_filename)} # Delete old file
-  
-  downloaded_block = data.frame(
-    list("data.coinbase"
-         ,"frequency"
-         ,"source"
-         ,"data.number"
-    )
-  )
-  write.table(downloaded_block[1,], dwnl_block_filename, sep = ",", col.names = F, append = F, row.names = F)
-  
-}
-
-
-
 ##### getAddresses #####
 #
 # Start loop for getting all addresses who have downloaded blocks
@@ -1181,7 +1291,7 @@ getAddresses <- function(cleaned_wd,file_check){
   # Setup output filename
   output_file <- paste(cleaned_wd,"\\Address\\Addresses_Summary.csv",
                        sep = "")
-
+  
   # Get file name to check
   num_loop = length(list_files)
   for(i in 1:num_loop){
@@ -1200,7 +1310,7 @@ getAddresses <- function(cleaned_wd,file_check){
     addresses$data.number <- ""
     colnames(addresses) <- cbind("data.coinbase","frequency","source","data.number")
     addresses <- addresses[order(-as.numeric(addresses$frequency)),]
-
+    
     # For each address, add in the blocks they downloaded
     for(i in 1:nrow(blocks)){
       blk = as.character(blocks[i,"data.number"])
@@ -1208,10 +1318,10 @@ getAddresses <- function(cleaned_wd,file_check){
       addresses[as.factor(addresses$data.coinbase) == add, ]$data.number <- 
         paste(addresses[as.factor(addresses$data.coinbase) == add, ]$data.number,";",blk,sep="")
     }
-
+    
     # Populate address table
     write.table(addresses, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
-
+    
   }
   
   return("Run Completed")
@@ -1252,15 +1362,82 @@ getTxAddresses <- function(cleaned_wd,file_check){
     tx_recipient <- as.vector(read_data$data.recipient)
     addresses <- as.data.frame(c(tx_sender,tx_recipient))
     colnames(addresses) <- "addresses"
-
+    
     addressestb = as.data.frame(table(addresses))
     addressestb <- addressestb[order(-as.numeric(addressestb$Freq)),]
     addressestb$source <- splitFile(old_file)[2]
-
+    
     # Populate address table
     write.table(addressestb, output_file, sep = ",", col.names = F, append = T, row.names = FALSE)
     
   }
   
   return("Run Completed")
+}
+
+
+
+
+
+
+
+
+
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### Other ##### ##### ##### ##### ##### ##### #####
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
+
+##### hexToString #####
+#
+# Convert Hexadecimal to String
+#
+##########################
+etherExtraToString <- function(hexa){
+  # http://stackoverflow.com/questions/29251934/how-to-convert-a-hex-string-to-text-in-r
+  
+  hexa_convert <- substr(hexa,3,nchar(hexa))
+  if(nchar(hexa_convert)==0){
+    str_out <- ""
+  }else{
+    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
+    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
+  }
+  out_list <- str_out
+    
+    if(length(hexa)>1){
+  for(i in 2:length(hexa)){
+    hexa_convert <- substr(hexa[i],3,nchar(hexa[i]))
+    if(nchar(hexa_convert)==0){str_out = ""
+    }else{
+    output <- sapply(seq(1, nchar(hexa_convert), by=2), function(x) substr(hexa_convert, x, x+1))
+    str_out <- rawToChar(as.raw(strtoi(output, 16L)))
+    }
+    
+    out_list <- rbind(out_list,str_out)
+  }
+  }
+
+  return(out_list)
+}
+
+
+
+##### hexToString #####
+#
+# Convert Hexadecimal to String
+#
+##########################
+convertArrayToString <- function(array,delim = ","){
+
+  output <- array[1]
+  
+  if(length(array)>1){
+    for(i in 2:length(array)){
+    output <- paste(output,delim,array[i]
+                    ,sep="")
+    }
+  }
+  
+  return(output)
 }

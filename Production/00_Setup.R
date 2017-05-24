@@ -34,11 +34,17 @@ library(plyr)       # Version:  plyr_1.8.4     # lsf.str("package:plyr")        
 
 ##### Global variables ####
 global_github = "C:\\Users\\temp.user\\Documents\\GitHub\\ethereum-analysis"
-global_sql_ps = paste(global_github,"\\SQL\\Prepared_Statements",sep="")
-global_wd = "C:\\Users\\temp.user\\Desktop\\Dissertation\\Dissertation_Data"
+
+global_wd = "C:\\Program Files\\Microsoft SQL Server\\MSSQL12.SQLEXPRESS\\MSSQL\\DATA\\Dissertation_Data"
 global_wd_block_info = paste(global_wd,"\\00_Raw_Data",sep="")
 global_wd_consol_blocks = paste(global_wd,"\\01_Consolidated",sep="")
 global_wd_cleaned_blocks = paste(global_wd,"\\02_Cleaned",sep="")
+global_wd_raw_tx = paste(global_wd,"\\03_Raw_Transactions",sep="")
+global_wd_cleaned_tx = paste(global_wd,"\\04_Cleaned_Transactions",sep="")
+global_wd_addresses = paste(global_wd,"\\05_User_Addresses",sep="")
+global_wd_addresses_sum = paste(global_wd,"\\05_User_Addresses\\Summary",sep="")
+global_wd_sql_config = paste(global_wd,"\\SQL_Config",sep="")
+
 global_last_block = 3200000
 global_label_read = "Label_31"          # "Year 2/Semester 2/Dissertation/Emails from R"
 global_label_processed = "Label_32"     # "Year 2/Semester 2/Dissertation/Emails from R/Request Processed"

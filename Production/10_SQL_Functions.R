@@ -2,6 +2,17 @@
 ##### ##### ##### ##### ##### ##### # SQL Functions # ##### ##### ##### ##### ##### #####
 ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### #####
 
+userid = "sa"
+password = "14Jul92*"
+data_import = "C:\\Program Files\\Microsoft SQL Server\\MSSQL12.SQLEXPRESS\\MSSQL\\DATA"
+data_blocks = paste(data_import,"\\Dissertation_Data\\01_Consolidated",sep="")
+data_tx = paste(data_import,"\\Dissertation_Data\\04_Cleaned_Transactions",sep="")
+
+##### Server Connection #####
+conn <- odbcConnect("SQLServer_ETH001", uid=userid, pwd=password)
+
+
+
 
 
 ##### revString #####
@@ -95,7 +106,7 @@ loadPreparedStatement <- function(psName){
 # Loads data into the database or into a variable
 #
 #####################
-loadText <- function(conn,filepath=list_files[i],delim,table = ""){
+loadText <- function(conn,filepath=list_files[i],delim,table = "",action = "SELECT"){
   
   # Create schema.ini file
   createSchema(filepath,delim)
@@ -105,6 +116,7 @@ loadText <- function(conn,filepath=list_files[i],delim,table = ""){
   sql <- paste("EXECUTE LoadText @filepath = '",fileVar[1]
                ,"',@filename = '",fileVar[2]
                ,"',@table = '",table
+               ,"',@action = '",action
                ,"'",sep="")
   
   # Execute query and retrieve results
@@ -112,5 +124,19 @@ loadText <- function(conn,filepath=list_files[i],delim,table = ""){
   
   # Return result
   return(res)
+  
+}
+
+
+
+##### convertSQLtoR #####
+#
+# Prints a SQL-returned string to the screen in R
+#
+#####################
+convertSQLtoR <- function(res){
+  
+  # Return result
+  return(cat(as.character(res)))
   
 }

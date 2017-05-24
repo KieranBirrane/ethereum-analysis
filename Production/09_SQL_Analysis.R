@@ -2,61 +2,107 @@
 ##### ##### ## SQL Analysis # ##### #####
 ##### ##### ##### ##### ##### ##### #####
 
-userid = "sa"
-password = "14Jul92*"
-data_import = "C:\\Program Files\\Microsoft SQL Server\\MSSQL12.SQLEXPRESS\\MSSQL\\DATA"
-data_blocks = paste(data_import,"\\Dissertation_Data\\01_Consolidated",sep="")
-data_tx = paste(data_import,"\\Dissertation_Data\\04_Cleaned_Transactions",sep="")
 
-
-
-##### Server Connection #####
-conn <- odbcConnect("SQLServer_ETH001", uid=userid, pwd=password)
-
-
-###### Blocks ######
+###### Set variables ######
 i=1
-list_files <- list.files(data_blocks, pattern = "*.csv", full.names = TRUE)
+sql = "SELECT COUNT(*) FROM input.Ethereum_Blocks"
+res <- sqlQuery(conn, sql)
 
-for(i in 1:10){
-  x <- loadText(conn,list_files[i],",", table = "input.Ethereum_Blocks")
+
+
+###### Load Configuration ######
+res <- loadText(conn
+                ,paste(global_wd_sql_config,"\\Data_Definition.csv",sep="")
+                ,","
+                ,"control_table.Data_Definition"
+                ,action = "INSERT"
+                #,action = "PRINT"
+                )
+convertSQLtoR(res)
+
+
+
+###### Load Blocks ######
+### Note: First block won't load as Data_BlockTime is NA, instead of a number
+# list_files <- list.files(global_wd_block_info, pattern = "*.csv", full.names = TRUE, recursive = TRUE)
+list_files <- list.files(global_wd_consol_blocks, pattern = "*.csv", full.names = TRUE)
+len_list <- length(list_files)
+
+sql = "TRUNCATE TABLE input.Ethereum_Blocks"
+res <- sqlQuery(conn, sql)
+
+s <- array(dim = c(len_list))
+e <- array(dim = c(len_list))
+timediff <- array(dim = c(len_list))
+
+for(i in 1:len_list){
+  s[i] <- Sys.time()
+  x <- loadText(conn
+                ,list_files[i]
+                ,","
+                ,table = "input.Ethereum_Blocks"
+                ,action = "INSERT"
+                #,action = "PRINT"
+                )
+  e[i] <- Sys.time()
+  timediff[i] <- e[i] - s[i]
 }
+convertSQLtoR(x)
 
-###### Blocks ######
-i=1
-list_files <- list.files(data_tx, pattern = "*.csv", full.names = TRUE)
 
-for(i in 1:10){
-  x <- loadText(conn,list_files[i],",")
+
+###### Load Transactions ######
+# list_files <- list.files(global_wd_raw_tx, pattern = "*.csv", full.names = TRUE, recursive = TRUE)
+list_files <- list.files(global_wd_cleaned_tx, pattern = "*.csv", full.names = TRUE)
+len_list <- length(list_files)
+
+sql = "TRUNCATE TABLE input.Ethereum_Transactions"
+res <- sqlQuery(conn, sql)
+
+s <- array(dim = c(len_list))
+e <- array(dim = c(len_list))
+timediff <- array(dim = c(len_list))
+
+for(i in 1:len_list){
+  s[i] <- Sys.time()
+  x <- loadText(conn
+                ,list_files[i]
+                ,","
+                ,table = "input.Ethereum_Blocks"
+                ,action = "INSERT"
+                #,action = "PRINT"
+  )
+  e[i] <- Sys.time()
+  timediff[i] <- e[i] - s[i]
 }
-
-  
-
-  
-#############################
-
-filennn = "C:\Program Files\Microsoft SQL Server\MSSQL12.SQLEXPRESS\MSSQL\DATA\Dissertation_Data\00_Raw_Data\01_0-250,000\Block_Info_100_149_.csv"
-
-filennn = "C:\\Program Files\\Microsoft SQL Server\\MSSQL12.SQLEXPRESS\\MSSQL\\DATA\\Dissertation_Data\\00_Raw_Data\\01_0-250,000"
+convertSQLtoR(x)
 
 
-filepath = "C:\\Program Files\\Microsoft SQL Server\\MSSQL12.SQLEXPRESS\\MSSQL\\DATA\\Dissertation_Data\\00_Raw_Data\\01_0-250,000\\Block_Info_100_149_.csv"
-delim = ","
 
-list_files <- list.files(filennn, pattern = "*.csv", full.names = TRUE)
+###### Load Addresses ######
+list_files <- list.files(global_wd_addresses, pattern = "*.csv", full.names = TRUE)
 
+sql = "TRUNCATE TABLE input.Addresses"
+res <- sqlQuery(conn, sql)
 
-res <- sqlQuery(con, "select * from dbo.temp_table")
+for(i in 1:length(list_files)){
+  x <- loadText(conn
+                ,list_files[i]
+                ,","
+                ,table = "input.Addresses"
+                ,action = "INSERT"
+                #,action = "PRINT"
+                )
+}
+convertSQLtoR(x)
 
-resss <- sqlQuery(con,"select day(blk.[data#time]) as [day],avg(CAST(blk.[data#blockTime] as float)) as [avg_time]
-from dbo.blocks_750k_2 blk
-                  group by day(blk.[data#time])")
+# Clean the consolidated address files into one set of addresses each
+output_file <- paste(global_wd_addresses,"\\Summary\\Addresses_Summary.csv",
+                     sep = "")
 
-summary(resss)
-resss$day
+sql = "SELECT ad.[Data_Coinbase] FROM input.Addresses ad WHERE ad.[Data_Coinbase] IS NOT NULL GROUP BY ad.[Data_Coinbase] ORDER BY ad.[Data_Coinbase]"
+res <- sqlQuery(conn, sql,errors = T,as.is = T)
 
-DSN:  SQLServer_ETH001
+colnames(res) <- cbind("Address") # res[1:10,]
+write.table(res, output_file, sep = ",", col.names = T, append = F, row.names = FALSE)
 
-IEEYDATAMINING\SQLEXPRESS
-
-ETH001_BLK_DATA
