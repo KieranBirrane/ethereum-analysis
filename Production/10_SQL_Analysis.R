@@ -106,3 +106,5 @@ res <- sqlQuery(conn, sql,errors = T,as.is = T)
 colnames(res) <- cbind("Address") # res[1:10,]
 write.table(res, output_file, sep = ",", col.names = T, append = F, row.names = FALSE)
 
+
+
