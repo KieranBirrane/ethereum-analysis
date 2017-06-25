@@ -1441,3 +1441,27 @@ convertArrayToString <- function(array,delim = ","){
   
   return(output)
 }
+
+
+
+##### summaryToLatex #####
+#
+# Convert summary object to Latex table
+#
+##########################
+summaryToLatex <- function(summ_col,name){
+  
+  latex_line <- paste("\t\t\\textbf{",name,"} & "
+                   ,min(summ_col)," & "
+                   ,max(summ_col)," & "
+                   ,quantile(summ_col,0.25)," & "
+                   ,quantile(summ_col,0.5)," & "
+                   ,quantile(summ_col,0.75)," & "
+                   ,quantile(summ_col,0.75)-quantile(summ_col,0.25)," & "
+                   ,round(mean(summ_col),2)," & "
+                   ,round(sd(summ_col),2),"\\\\\n"
+                   ,sep="")
+  df <- data.frame(LaTeX=as.character(latex_line))
+
+  return(df)
+}

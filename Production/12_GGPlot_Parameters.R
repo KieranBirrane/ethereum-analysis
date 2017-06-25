@@ -7,9 +7,15 @@ setwd(global_wd_r_outputs)
 ##########
 # Help
 ##########
-?ggplot
-?ggtitle
-?labs
+# ?ggplot
+# ?ggtitle
+# ?labs
+# ?geom_bar
+# ?geom_col
+# ?geom_histogram
+# ?annotate
+# ?geom_text
+# ?geom_vline
 
 
 
@@ -24,6 +30,7 @@ green = "limegreen"
 blue = "dodgerblue1"
 indigo = "purple4"
 violet = "violetred"
+white = "white"
 
 
 ##########

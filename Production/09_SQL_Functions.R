@@ -10,7 +10,9 @@ data_tx = paste(data_import,"\\Dissertation_Data\\04_Cleaned_Transactions",sep="
 
 ##### Server Connection #####
 conn <- odbcConnect("SQLServer_ETH001", uid=userid, pwd=password)
-
+sql <- "SELECT 'test'"
+res <- sqlQuery(conn, sql)
+res
 
 
 
@@ -138,5 +140,60 @@ convertSQLtoR <- function(res){
   
   # Return result
   return(cat(as.character(res)))
+  
+}
+
+
+
+##### retrieveAddressBlocks #####
+#
+# Retrieve mined blocks associated to an address
+#
+#####################
+retrieveAddressBlocks <- function(address){
+  sql=paste("
+    SELECT eb.[Data_Number]
+    FROM ETH001_BLK_DATA.input.Ethereum_Blocks eb
+    WHERE 1=1
+    AND eb.[Data_Coinbase] = '",address,"'
+    AND eb.[Data_Number]<3100155
+    ORDER BY eb.[Data_Number]"
+    ,sep="")
+  
+  res <- sqlQuery(conn, sql,errors = T,as.is = T)
+  blocks <- as.numeric(res$Data_Number)
+  blocks <- as.data.frame(blocks)
+  
+  # Return result
+  return(blocks)
+  
+}
+
+
+
+##### retrieveAddressNameBlocks #####
+#
+# Retrieve mined blocks associated to an address (grouped by name)
+#
+#####################
+retrieveAddressNameBlocks <- function(name){
+  sql=paste("
+            SELECT eb.[Data_Coinbase],eb.[Data_Number]
+            FROM ETH001_BLK_DATA.input.Ethereum_Blocks eb
+              LEFT JOIN
+              ETH001_BLK_DATA.input.Ethereum_Addresses ea
+              ON eb.[Data_Coinbase] = ea.[Data_Address]
+            WHERE 1=1
+            AND eb.[Data_Number]<3100155
+            AND ea.[Data_Name] = '",name,"'
+            ORDER BY eb.[Data_Number]"
+            ,sep="")
+  
+  res <- sqlQuery(conn, sql,errors = T,as.is = T)
+  blocks <- as.data.frame(res)
+  blocks$Data_Number <- as.numeric(blocks$Data_Number)
+  
+  # Return result
+  return(blocks)
   
 }

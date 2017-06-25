@@ -10,6 +10,7 @@
 # Block = 3,100,154
 
 # rm(list=ls(all=TRUE))
+# gc()
 # getwd()
 # sessionInfo()
 
